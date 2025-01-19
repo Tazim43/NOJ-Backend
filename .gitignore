@@ -1,0 +1,69 @@
+# Node.js modules
+node_modules/
+
+# Environment files (env.sample for reference)
+.env
+!.env.sample
+
+# Logs and debug files
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.pid.lock
+*.seed
+*.csv
+
+# Coverage files
+coverage/
+
+# Build and output directories
+dist/
+build/
+out/
+
+# Dependency directories
+jspm_packages/
+
+# Temporary files
+*.cache
+*.tmp
+*.temp
+
+# IDE/Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating system files
+.DS_Store
+Thumbs.db
+*.bak
+
+# Package manager lock files (if you're not using them)
+# Uncomment the ones you don't use
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Git-specific files
+*.orig
+
+# Miscellaneous
+*.log
+*.gz
+*.tgz
+*.bak
+*.old
+*.orig
+*.rej
+
+# Ignore test environment and data
+.env.test

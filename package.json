@@ -1,0 +1,29 @@
+{
+  "name": "noj-backend",
+  "version": "1.0.0",
+  "description": "The Backend of NaiveOJ.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tazim43/NOJ-Backend.git"
+  },
+  "keywords": [
+    "Backend",
+    "NOJ",
+    "NodeJS"
+  ],
+  "author": "Md. Tazim Uddin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Tazim43/NOJ-Backend/issues"
+  },
+  "homepage": "https://github.com/Tazim43/NOJ-Backend#readme",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.3"
+  }
+}
