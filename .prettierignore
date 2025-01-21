@@ -1,0 +1,29 @@
+# Ignore artifacts and build output
+node_modules
+dist
+build
+.out
+coverage
+
+# Ignore environment and configuration files
+.env
+.env.local
+.env.*.local
+
+# Ignore log files
+*.log
+
+# Ignore package manager lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Ignore generated files
+*.min.js
+*.bundle.js
+
+# Ignore specific directories or files
+public/assets/*
+tmp/
+.cache/
+

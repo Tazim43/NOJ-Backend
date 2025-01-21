@@ -2,9 +2,11 @@ import express from "express";
 
 const app = express();
 
+app.use(express.json());
+
 app.get("/", (req, res) => {
   res.json({
-    msg: "Hello NaiveOJ",
+    msg: "Wellcome to  NaiveOJ v1.0",
   });
 });
 
