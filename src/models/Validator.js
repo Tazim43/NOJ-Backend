@@ -21,4 +21,4 @@ const ValidatorSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Validator", ValidatorSchema);
+export default mongoose.model("Validator", ValidatorSchema);

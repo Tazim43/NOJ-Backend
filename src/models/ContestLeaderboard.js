@@ -29,4 +29,4 @@ const ContestLeaderboardSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("ContestLeaderboard", ContestLeaderboardSchema);
+export default mongoose.model("ContestLeaderboard", ContestLeaderboardSchema);

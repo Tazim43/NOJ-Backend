@@ -112,4 +112,4 @@ const ContestSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Contest", ContestSchema);
+export default mongoose.model("Contest", ContestSchema);

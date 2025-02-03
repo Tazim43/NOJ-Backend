@@ -64,4 +64,4 @@ const ProblemSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Problem", ProblemSchema);
+export default mongoose.model("Problem", ProblemSchema);

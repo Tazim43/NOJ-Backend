@@ -34,4 +34,4 @@ const SolutionSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Solution", SolutionSchema);
+export default mongoose.model("Solution", SolutionSchema);
