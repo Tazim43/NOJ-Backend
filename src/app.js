@@ -8,8 +8,8 @@ app.use(express.urlencoded({ limit: LIMIT }));
 app.use(express.static("public"));
 
 // import routes
-import UserRouter from "./routes/User.js";
-import ProblemRouter from "./routes/Problem.js";
+import UserRouter from "./routes/User.router.js";
+import ProblemRouter from "./routes/Problem.router.js";
 
 // define routes
 app.use(`${BASEURL}/auth`, UserRouter);
