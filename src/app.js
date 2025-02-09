@@ -8,10 +8,10 @@ app.use(express.urlencoded({ limit: LIMIT }));
 app.use(express.static("public"));
 
 // import routes
-import AuthRouter from "./routes/Auth.js";
+import UserRouter from "./routes/User.js";
 
 // define routes
-app.use(`${BASEURL}/auth`, AuthRouter);
+app.use(`${BASEURL}/auth`, UserRouter);
 
 app.get("/", (req, res) => {
   res.json({
