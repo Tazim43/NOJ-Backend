@@ -9,9 +9,11 @@ app.use(express.static("public"));
 
 // import routes
 import UserRouter from "./routes/User.js";
+import ProblemRouter from "./routes/Problem.js";
 
 // define routes
 app.use(`${BASEURL}/auth`, UserRouter);
+app.use(`${BASEURL}/problems`, ProblemRouter);
 
 app.get("/", (req, res) => {
   res.json({
