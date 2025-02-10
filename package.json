@@ -26,8 +26,10 @@
   "homepage": "https://github.com/Tazim43/NOJ-Backend#readme",
   "dependencies": {
     "cloudinary": "^2.5.1",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
     "multer": "^1.4.5-lts.1"
