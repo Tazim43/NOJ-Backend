@@ -1,31 +1,25 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import { uploadOnCloudinary } from "../utils/Cloudinary.js";
 
-exports.registerUser = asyncHandler(async (req, res) => {
-  // TODO: Get user details from frontend (req.body)
+const registerUser = asyncHandler(async (req, res) => {
   const { username, email, password, avatar } = req.body;
-
-  // TODO: Validate user details (ensure fields are not empty)
   if (!username || !email || !password) {
     return res.status(400).json({ msg: "Please enter all fields" });
   }
 
-  // TODO: Check if user already exists (by username or email)
+  // Check if user already exists
   const userExists = await User.findOne({ $or: [{ username }, { email }] });
-
   if (userExists) {
     return res.status(400).json({ msg: "User already exists" });
   }
 
-  // TODO: check of images, check for avatar
-  // TODO: upload them to cloudinary
+  // Upload avatar to Cloudinary and get the URL
 
   let avatarUrl = "";
   if (avatar) {
-    const result = await cloudinary.uploader.upload(avatar, {
-      folder: "avatars",
-    });
+    const result = await uploadOnCloudinary(avatar, "avatars");
     avatarUrl = result.secure_url;
   }
 
@@ -60,38 +54,48 @@ exports.registerUser = asyncHandler(async (req, res) => {
   });
 });
 
-exports.loginUser = asyncHandler(async (req, res) => {
+const loginUser = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.logoutUser = asyncHandler(async (req, res) => {
+const logoutUser = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.resetPassword = asyncHandler(async (req, res) => {
+const resetPassword = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.refreshToken = asyncHandler(async (req, res) => {
+const refreshToken = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.verifyEmail = asyncHandler(async (req, res) => {
+const verifyEmail = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.changePassword = asyncHandler(async (req, res) => {
+const changePassword = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  resetPassword,
+  refreshToken,
+  verifyEmail,
+  changePassword,
+};

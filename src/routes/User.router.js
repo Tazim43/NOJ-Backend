@@ -1,16 +1,25 @@
 import { Router } from "express";
-import userController from "../controllers/User.controller.js";
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+  resetPassword,
+  refreshToken,
+  changePassword,
+} from "../controllers/User.controller.js";
+import {
+  authenticate,
+  authorize,
+  verifyRefreshToken,
+} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// TODO : add auth middlewares
-
-router.route("/register").post(userController.registerUser);
-router.route("/login").post(userController.loginUser);
-router.route("/logout").post(userController.logoutUser);
-router.route("/reset-password").post(userController.resetPassword);
-router.route("/refresh-token").post(userController.refreshToken);
-router.route("/verify-email").post(userController.verifyEmail);
-router.route("/change-password").post(userController.changePassword);
+router.route("/register").post(registerUser);
+router.route("/login").post(loginUser);
+router.route("/logout").post(authenticate, logoutUser);
+router.route("/reset-password").post(authenticate, resetPassword);
+router.route("refresh-token").post(verifyRefreshToken, refreshToken);
+router.route("/change-password").post(authenticate, changePassword);
 
 export default router;

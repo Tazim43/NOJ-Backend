@@ -1,12 +1,12 @@
 import jwt from "jsonwebtoken";
-import ApiError from "../utils/apiError";
+import ApiError from "../utils/ApiError.js";
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
-import { User } from "../models/User.model";
+import User from "../models/User.js";
 
 // Check if the user is authenticated using JWT token in the request header or cookie
-exports.authenticate = async (req, _, next) => {
+const authenticate = async (req, _, next) => {
   try {
     // Get the token from the request header or cookie
     const token =
@@ -49,7 +49,7 @@ exports.authenticate = async (req, _, next) => {
 };
 
 // Authorize roles
-exports.authorize = (...roles) => {
+const authorize = (...roles) => {
   return (req, _, next) => {
     if (!roles.includes(req.user.role)) {
       throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
@@ -59,7 +59,7 @@ exports.authorize = (...roles) => {
 };
 
 // Verify refresh token in the request cookie and attach the user to the request object
-exports.verifyRefreshToken = async (req, _, next) => {
+const verifyRefreshToken = async (req, _, next) => {
   try {
     const refreshToken =
       req.cookies?.refreshToken || req.header("refreshToken");
@@ -97,3 +97,5 @@ exports.verifyRefreshToken = async (req, _, next) => {
     }
   }
 };
+
+export { authenticate, authorize, verifyRefreshToken };

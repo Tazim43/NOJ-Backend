@@ -1,37 +1,46 @@
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
-exports.getAllProblems = asyncHandler(async (req, res) => {
+const getAllProblems = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.getProblemByID = asyncHandler(async (req, res) => {
+const getProblemById = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.createProblem = asyncHandler(async (req, res) => {
+const createProblem = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.updateProblem = asyncHandler(async (req, res) => {
+const updateProblem = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.deleteProblem = asyncHandler(async (req, res) => {
+const deleteProblem = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
-exports.updateProblemVisibility = asyncHandler(async (req, res) => {
+const updateProblemVisibility = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
+
+export {
+  getAllProblems,
+  getProblemById,
+  createProblem,
+  updateProblem,
+  deleteProblem,
+  updateProblemVisibility,
+};
