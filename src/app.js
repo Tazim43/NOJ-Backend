@@ -1,5 +1,6 @@
 import express from "express";
 import { BASEURL, LIMIT } from "./constants.js";
+
 const app = express();
 
 // app config
@@ -17,7 +18,40 @@ import cookieParser from "cookie-parser";
 app.use(`${BASEURL}/auth`, UserRouter);
 app.use(`${BASEURL}/problems`, ProblemRouter);
 
-app.get("/", (req, res) => {
+import { StatusCodes, ReasonPhrases } from "http-status-codes";
+import ApiError from "./utils/apiError.js";
+
+// Custom error-handling middleware
+app.use((err, req, res, next) => {
+  // Check if the error is an instance of ApiError
+  if (err instanceof ApiError) {
+    return res.status(err.status).json({
+      status: err.status,
+      success: err.success,
+      message: err.message,
+      errors: err.errors,
+    });
+  }
+
+  if (err.status == 413 || err.type === "entity.too.large") {
+    return res.status(StatusCodes.REQUEST_TOO_LONG).json({
+      status: err.status,
+      success: err.success,
+      message: err.message,
+      errors: err.errors,
+    });
+  }
+
+  console.log("new error", err.message);
+  // Handle other types of errors
+  return res.status().json({
+    status: StatusCodes.INTERNAL_SERVER_ERROR,
+    message: ReasonPhrases.INTERNAL_SERVER_ERROR,
+    errors: err.errors,
+  });
+});
+
+app.get(`${BASEURL}/`, (req, res) => {
   res.json({
     msg: "Wellcome to   NaiveOJ v1.0",
   });
