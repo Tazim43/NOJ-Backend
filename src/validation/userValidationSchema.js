@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const usernameRegex = /^[a-zA-Z0-9_]+$/; // Alphabets, numbers, and underscores
-const fullNameRegex = /^[a-zA-Z\s]+$/; // Alphabets and spaces
+const fullNameRegex = /^[a-zA-Z\s.]+$/; // Alphabets, spaces, and periods
 
 // User validation schema
 const userValidationSchema = z.object({
@@ -26,7 +26,7 @@ const userValidationSchema = z.object({
     .string()
     .min(1, { message: "Full name is required" })
     .regex(fullNameRegex, {
-      message: "Full name can only contain alphabets and spaces",
+      message: "Full name can only contain alphabets, spaces and periods",
     })
     .transform((val) => val.trim()), // Trim the full name
 });
