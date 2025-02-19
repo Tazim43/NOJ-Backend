@@ -12,10 +12,11 @@ import {
   authorize,
   verifyRefreshToken,
 } from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/upload.middleware.js";
 
 const router = Router();
 
-router.route("/register").post(registerUser);
+router.route("/register").post(upload.single("avatar"), registerUser);
 router.route("/login").post(loginUser);
 router.route("/logout").post(authenticate, logoutUser);
 router.route("/reset-password").post(authenticate, resetPassword);
