@@ -111,8 +111,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true, // Cookie cannot be accessed by client-side scripts
-    secure: process.env.NODE_ENV === "production", // Cookie will only be set on HTTPS
-    sameSite: "none", // Cookie will be sent in cross-origin requests
+    secure: true, // Cookie will only be sent over HTTPS
+    sameSite: "strict", // Cookie will only be sent to the same site
   });
 
   res.json({
