@@ -12,15 +12,15 @@ const registerUser = asyncHandler(async (req, res) => {
     email: req.body.email,
     password: req.body.password,
     fullName: req.body.fullName,
-    avatar: req.files?.avatar,
+    avatarUrl: req.file?.path,
   };
 
   const validationResult = userValidationSchema.safeParse(userData);
 
   if (!validationResult.success) {
-    if (userData.avatar) fs.unlinkSync(userData.avatar);
-
-    console.log("check");
+    if (userData.avatarUrl) {
+      fs.unlinkSync(userData.avatarUrl);
+    }
 
     throw new apiError(
       StatusCodes.BAD_REQUEST,
@@ -34,15 +34,16 @@ const registerUser = asyncHandler(async (req, res) => {
     $or: [{ username: userData.username }, { email: userData.email }],
   });
   if (userExists) {
-    if (userData.avatar) fs.unlinkSync(userData.avatar);
+    if (userData.avatarUrl) fs.unlinkSync(userData.avatarUrl);
     return res.status(400).json({ msg: "User already exists" });
   }
 
   // Upload avatar to Cloudinary and get the URL
-  let avatarUrl = "";
-  if (userData.avatar) {
-    const result = await uploadOnCloudinary(userData.avatar, "avatars");
-    avatarUrl = result.secure_url;
+  if (userData.avatarUrl) {
+    userData.avatarUrl = await uploadOnCloudinary(
+      userData.avatarUrl,
+      "avatars"
+    );
   }
 
   // Save user to database
@@ -54,9 +55,9 @@ const registerUser = asyncHandler(async (req, res) => {
     user: {
       id: newUser._id,
       username: newUser.username,
-      fullNam: newUser.fullName,
+      fullName: newUser.fullName,
       email: newUser.email,
-      avatar: newUser.avatar,
+      avatarUrl: newUser.avatarUrl,
     },
   });
 });

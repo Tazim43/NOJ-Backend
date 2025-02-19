@@ -1,5 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import dotenv from "dotenv";
+dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -17,10 +19,9 @@ const uploadOnCloudinary = async (localFilePath) => {
     });
 
     fs.unlinkSync(localFilePath); // Delete the file from the local storage
-    return uploadResult.url;
+    return uploadResult.secure_url;
   } catch (error) {
     if (!localFilePath) return null;
-
     fs.unlinkSync(localFilePath);
     return null;
   }
