@@ -21,11 +21,13 @@ const ProblemSchema = new mongoose.Schema(
       type: String,
       enum: ["Easy", "Medium", "Hard"],
     },
-    authorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: [true, "authorId is required"],
-    },
+    authorIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: [true, "authorId is required"],
+      },
+    ],
     solveCount: {
       type: Number,
       default: 0,

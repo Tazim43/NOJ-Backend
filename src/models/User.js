@@ -110,6 +110,12 @@ const UserSchema = new mongoose.Schema(
         ref: "Problem",
       },
     ],
+    authoredProblems: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Problem",
+      },
+    ],
   },
   {
     timestamps: true,
