@@ -7,10 +7,46 @@ const ProblemSchema = new mongoose.Schema(
       required: true,
       unique: [true, "title is required"],
     },
+    timeLimit: {
+      type: Number,
+      required: [true, "timeLimit is required in ms"],
+    },
+    memoryLimit: {
+      type: Number,
+      required: [true, "memoryLimit is required"],
+    },
     statementId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ProblemStatement",
-      required: [true, "statementId is required"],
+    },
+    authorIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: [true, "authorId is required"],
+      },
+    ],
+    testcaseIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Testcase",
+      },
+    ],
+    solutionIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Solution",
+      },
+    ],
+    validatorIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Validator",
+      },
+    ],
+    contestId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Contest",
     },
     tags: [
       {
@@ -21,13 +57,6 @@ const ProblemSchema = new mongoose.Schema(
       type: String,
       enum: ["Easy", "Medium", "Hard"],
     },
-    authorIds: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: [true, "authorId is required"],
-      },
-    ],
     solveCount: {
       type: Number,
       default: 0,
@@ -36,21 +65,10 @@ const ProblemSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    timeLimit: {
-      type: Number,
-      required: [true, "timeLimit is required"],
-    },
-    memoryLimit: {
-      type: Number,
-      required: [true, "memoryLimit is required"],
-    },
+
     isContestProblem: {
       type: Boolean,
       default: false,
-    },
-    contestId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Contest",
     },
     attempts: {
       type: Number,
