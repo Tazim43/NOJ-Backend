@@ -1,12 +1,14 @@
 import jwt from "jsonwebtoken";
-import ApiError from "../utils/ApiError.js";
+import ApiError from "../utils/apiError.js";
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import User from "../models/User.js";
+import Problem from "../models/Problem.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Check if the user is authenticated using JWT token in the request header or cookie
-const authenticate = async (req, _, next) => {
+const authenticate = asyncHandler(async (req, _, next) => {
   try {
     // Get the token from the request header or cookie
     const token =
@@ -14,6 +16,7 @@ const authenticate = async (req, _, next) => {
       req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
+      console.log("No token found");
       throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
     }
 
@@ -27,7 +30,7 @@ const authenticate = async (req, _, next) => {
 
     // Find the user by the id in the token
     const user = await User.findById(decoded.id).select(
-      "-password -passwordResetToken -refreshToken -emailVerificationToken "
+      "-password -passwordResetToken -refreshToken -emailVerificationToken"
     );
 
     if (!user) {
@@ -46,20 +49,51 @@ const authenticate = async (req, _, next) => {
       );
     }
   }
-};
+});
 
 // Authorize roles
-const authorize = (...roles) => {
+// QQ: won't it be async?
+const authorize = asyncHandler(async (...roles) => {
   return (req, _, next) => {
     if (!roles.includes(req.user.role)) {
       throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
     }
     next();
   };
-};
+});
+
+// Authorize Problem author
+const authorizeProblemAuthor = asyncHandler(async (req, _, next) => {
+  try {
+    const problemId = req.params.id;
+    const user = req.user;
+    const problem = await Problem.findById(problemId);
+    if (!problem) {
+      throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+    }
+    let isAuthor = false;
+    problem.authorIds.forEach((authorId) => {
+      isAuthor |= authorId.toString() === user._id.toString();
+    });
+
+    if (!isAuthor) {
+      throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
+    }
+    next();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        ReasonPhrases.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+});
 
 // Verify refresh token in the request cookie and attach the user to the request object
-const verifyRefreshToken = async (req, _, next) => {
+const verifyRefreshToken = asyncHandler(async (req, _, next) => {
   try {
     const refreshToken =
       req.cookies?.refreshToken || req.header("refreshToken");
@@ -96,6 +130,6 @@ const verifyRefreshToken = async (req, _, next) => {
       );
     }
   }
-};
+});
 
-export { authenticate, authorize, verifyRefreshToken };
+export { authenticate, authorize, authorizeProblemAuthor, verifyRefreshToken };
