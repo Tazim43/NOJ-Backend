@@ -41,7 +41,12 @@ router
     createProblemStatement,
     multerError
   )
-  .put(authenticate, authorizeProblemAuthor, updateProblemStatement);
+  .put(
+    upload.array("imageList", 5),
+    authenticate,
+    authorizeProblemAuthor,
+    updateProblemStatement
+  );
 
 router
   .route("/:id/visibility")

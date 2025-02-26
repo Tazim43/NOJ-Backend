@@ -98,8 +98,76 @@ const createProblemStatement = asyncHandler(async (req, res) => {
 // Update an existing problem statement
 // PUT /api/v1/problems/:id/statement
 const updateProblemStatement = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  const problemDetails = await Problem.findById(req.params.id);
+  if (!problemDetails) {
+    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+  }
+
+  if (!problemDetails.statementId) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Problem statement does not exist"
+    );
+  }
+
+  const problemStatement = await ProblemStatement.findById(
+    problemDetails.statementId
+  );
+
+  if (!problemStatement) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      "Problem statement record not found"
+    );
+  }
+
+  if (!req.body.imageList) req.body.imageList = problemStatement.imageList;
+
+  // Validate request body
+  const validationResult = problemStatementValidation.safeParse(req.body);
+  if (!validationResult.success) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      ReasonPhrases.BAD_REQUEST,
+      validationResult.error.errors
+    );
+  }
+
+  const updatedStatementData = validationResult.data;
+
+  // Handle new image uploads
+  if (req.files) {
+    for (const file of req.files) {
+      try {
+        const imageUrl = await uploadOnCloudinary(
+          file.path,
+          "problem-statements"
+        );
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+        updatedStatementData.imageList.push(imageUrl);
+      } catch (err) {
+        throw new ApiError(
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          ReasonPhrases.INTERNAL_SERVER_ERROR,
+          err.message
+        );
+      }
+    }
+  }
+
+  // Update the ProblemStatement document
+  const updatedProblemStatement = await ProblemStatement.findByIdAndUpdate(
+    problemStatement._id,
+    updatedStatementData,
+    { new: true, runValidators: true }
+  );
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: "Problem statement updated successfully",
+    updatedProblemStatement,
   });
 });
 
