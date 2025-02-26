@@ -95,27 +95,80 @@ const createProblemStatement = asyncHandler(async (req, res) => {
   });
 });
 
+// Update an existing problem statement
+// PUT /api/v1/problems/:id/statement
 const updateProblemStatement = asyncHandler(async (req, res) => {
   res.json({
     msg: "TODO",
   });
 });
 
+// Get all visible problems with only title and id
+// GET /api/v1/problems
 const getAllProblems = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  const problems = await Problem.find(
+    { isVisible: true },
+    " title timeLimit memoryLimit tags difficulty solveCount"
+  )
+    .select("_id title timeLimit memoryLimit tags difficulty solveCount")
+    .exec();
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    problems,
   });
 });
 
+// Get a problem by id : public
+// GET /api/v1/problems/:id
 const getProblemById = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  const problem = await Problem.findOne({
+    _id: req.params.id,
+    isVisible: true,
+  })
+    .populate("statementId")
+    .exec();
+  if (!problem) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Problem not found"
+    );
+  }
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    problem,
   });
 });
 
+// Get a problem statement by id : public
+// GET /api/v1/problems/:id/statement
 const getProblemStatementById = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  let statementId = await Problem.findById(req.params.id, "statementId").exec();
+
+  if (!statementId) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Problem statement not found"
+    );
+  }
+
+  statementId = statementId.statementId.toString();
+  const problemStatement = await ProblemStatement.findById(statementId).exec();
+
+  if (!problemStatement) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Problem statement not found"
+    );
+  }
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    problemStatement,
   });
 });
 

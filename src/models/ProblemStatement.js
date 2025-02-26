@@ -8,7 +8,7 @@ const ProblemStatementSchema = new mongoose.Schema(
     },
     constraints: {
       type: String,
-      required: [true, "constraints is required"],
+      // required: [true, "constraints is required"], // optional for now : can be included in input desc
     },
     inputDescription: {
       type: String,
@@ -18,6 +18,11 @@ const ProblemStatementSchema = new mongoose.Schema(
       type: String,
       required: [true, "outputDescription is required"],
     },
+    imageList: [
+      {
+        type: String,
+      },
+    ],
     notes: {
       type: String,
     },
