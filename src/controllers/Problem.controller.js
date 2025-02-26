@@ -243,16 +243,9 @@ const getProblemStatementById = asyncHandler(async (req, res) => {
 // Update a problem by id
 // PUT /api/v1/problems/:id
 const updateProblem = asyncHandler(async (req, res) => {
-  const problem = await Problem.findById(req.params.id).exec();
-  if (!problem) {
-    throw new ApiError(
-      StatusCodes.NOT_FOUND,
-      ReasonPhrases.NOT_FOUND,
-      "Problem not found"
-    );
-  }
+  const problemData = req.body;
 
-  const validationResult = problemValidationSchema.safeParse(problem);
+  const validationResult = problemValidationSchema.safeParse(problemData);
   if (!validationResult.success) {
     console.log(validationResult);
     throw new ApiError(
