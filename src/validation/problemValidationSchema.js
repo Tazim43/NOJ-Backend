@@ -5,10 +5,6 @@ const problemValidationSchema = z.object({
   title: z.string().min(1, "Title is required"),
   timeLimit: z.number().positive("Time limit must be a positive number"),
   memoryLimit: z.number().positive("Memory limit must be a positive number"),
-  statementId: z.string().optional(), // Optional ObjectId
-  authorIds: z
-    .array(z.string().min(1, "Author ID is required"))
-    .min(1, "At least one author is required"),
   testcaseIds: z.array(z.string()).optional(),
   solutionIds: z.array(z.string()).optional(),
   validatorIds: z.array(z.string()).optional(),

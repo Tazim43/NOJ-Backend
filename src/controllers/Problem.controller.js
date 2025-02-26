@@ -240,9 +240,37 @@ const getProblemStatementById = asyncHandler(async (req, res) => {
   });
 });
 
+// Update a problem by id
+// PUT /api/v1/problems/:id
 const updateProblem = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  const problem = await Problem.findById(req.params.id).exec();
+  if (!problem) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Problem not found"
+    );
+  }
+
+  const validationResult = problemValidationSchema.safeParse(problem);
+  if (!validationResult.success) {
+    console.log(validationResult);
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      ReasonPhrases.BAD_REQUEST,
+      validationResult.error.errors
+    );
+  }
+
+  const updatedProblem = await Problem.findByIdAndUpdate(
+    req.params.id,
+    validationResult.data,
+    { new: true, runValidators: true }
+  );
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    updatedProblem,
   });
 });
 

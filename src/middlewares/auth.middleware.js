@@ -25,7 +25,11 @@ const authenticate = asyncHandler(async (req, _, next) => {
     try {
       decoded = jwt.verify(token, JWT_SECRET); // verify the token
     } catch (error) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED,
+        ReasonPhrases.UNAUTHORIZED,
+        error
+      );
     }
 
     // Find the user by the id in the token
