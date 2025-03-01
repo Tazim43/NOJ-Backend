@@ -52,7 +52,7 @@ const SubmissionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isVisible: {
+    isPublic: {
       type: Boolean,
       default: true,
     },
