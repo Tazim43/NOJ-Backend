@@ -5,6 +5,7 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import User from "../models/User.js";
 import Problem from "../models/Problem.js";
+import Submission from "../models/Submission.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Check if the user is authenticated using JWT token in the request header or cookie
@@ -81,6 +82,36 @@ const authorizeProblemAuthor = asyncHandler(async (req, _, next) => {
     });
 
     if (!isAuthor) {
+      throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
+    }
+    next();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        ReasonPhrases.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+});
+
+const authorizeSubmissionAuthor = asyncHandler(async (req, _, next) => {
+  try {
+    const submissionId = req.params.id;
+    const user = req.user;
+    const submission = await Submission.findById(submissionId);
+    if (!submission) {
+      throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+    }
+
+    if (submission.isPublic) {
+      next();
+      return;
+    }
+
+    if (submission.userId.toString() !== user._id.toString()) {
       throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
     }
     next();
