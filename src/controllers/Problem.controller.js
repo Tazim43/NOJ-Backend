@@ -267,15 +267,39 @@ const updateProblem = asyncHandler(async (req, res) => {
   });
 });
 
+// Delete a problem by id
+// DELETE /api/v1/problems/:id
 const deleteProblem = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  const problem = await Problem.findByIdAndDelete(req.params.id);
+  if (!problem) {
+    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+  }
+
+  // Delete the problem statement if it exists1
+  if (problem.statementId) {
+    await ProblemStatement.findByIdAndDelete(problem.statementId);
+  }
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    message: "Problem deleted successfully",
   });
 });
 
 const updateProblemVisibility = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  const problem = await Problem.findById(req.params.id);
+
+  if (!problem) {
+    throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+  }
+
+  problem.isVisible = !problem.isVisible;
+  await problem.save();
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    isVisible: problem.isVisible,
+    message: `Problem visibility updated to ${problem.isVisible}`,
   });
 });
 
