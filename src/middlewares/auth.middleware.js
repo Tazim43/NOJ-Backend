@@ -57,15 +57,14 @@ const authenticate = asyncHandler(async (req, _, next) => {
 });
 
 // Authorize roles
-// QQ: won't it be async?
-const authorize = asyncHandler(async (...roles) => {
+const authorize = (...roles) => {
   return (req, _, next) => {
     if (!roles.includes(req.user.role)) {
       throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
     }
     next();
   };
-});
+};
 
 // Authorize Problem author
 const authorizeProblemAuthor = asyncHandler(async (req, _, next) => {
@@ -91,7 +90,8 @@ const authorizeProblemAuthor = asyncHandler(async (req, _, next) => {
     } else {
       throw new ApiError(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        ReasonPhrases.INTERNAL_SERVER_ERROR
+        ReasonPhrases.INTERNAL_SERVER_ERROR,
+        error
       );
     }
   }
@@ -167,4 +167,10 @@ const verifyRefreshToken = asyncHandler(async (req, _, next) => {
   }
 });
 
-export { authenticate, authorize, authorizeProblemAuthor, verifyRefreshToken };
+export {
+  authenticate,
+  authorize,
+  authorizeProblemAuthor,
+  verifyRefreshToken,
+  authorizeSubmissionAuthor,
+};
