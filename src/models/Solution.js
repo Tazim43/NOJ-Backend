@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const SolutionSchema = new mongoose.Schema(
   {
@@ -7,15 +7,11 @@ const SolutionSchema = new mongoose.Schema(
       ref: "Problem",
       required: [true, "problemId is required"],
     },
-    description: {
-      type: String,
-      required: [true, "description is required"],
-    },
-    language: {
-      type: String,
+    languageId: {
+      type: Number,
       required: [true, "language is required"],
     },
-    code: {
+    source_code: {
       type: String,
       required: [true, "code is required"],
     },
