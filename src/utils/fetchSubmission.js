@@ -34,10 +34,7 @@ export const fetchCompilerOutput = async (token) => {
       const interval = setInterval(async () => {
         try {
           const URL = `${process.env.CEE_URI}/submissions/${token}`;
-          console.log("URL : ", URL);
           const response = await axios.request(URL, options);
-
-          console.log(response.data);
 
           if (response.data.status?.id > 2) {
             clearInterval(interval);

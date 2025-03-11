@@ -44,3 +44,5 @@ router
 router
   .route("/:subID/visibility")
   .post(authorize(ROLES.ADMIN), toggleSubmissionVisibility);
+
+export default router;

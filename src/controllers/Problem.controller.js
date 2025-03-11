@@ -1,7 +1,7 @@
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import problemValidationSchema from "../validation/problemValidationSchema.js";
-import { problemStatementValidation } from "../validation/problemStatementValidation.js";
+import { problemStatementValidation } from "../validation/problemAssetsValidation.js";
 import ApiError from "../utils/apiError.js";
 import Problem from "../models/Problem.js";
 import ProblemStatement from "../models/ProblemStatement.js";
