@@ -122,7 +122,11 @@ const createSolution = asyncHandler(async (req, res) => {
     const result = await fetchCompilerOutput(token);
 
     if (result.status !== StatusCodes.OK) {
-      throw new ApiError(result.status, "Compilation Error", result.message);
+      throw new ApiError(
+        result.status,
+        "Compilation Error",
+        base64Decode(result.message)
+      );
     }
 
     // save the solution to the database
@@ -167,26 +171,167 @@ const createSolution = asyncHandler(async (req, res) => {
 });
 
 // @desc      Get a single solution
-// @route     GET /api/solutions/:id
+// @route     GET /api/solutions/:id/:solId
 const getSolutionById = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "todo",
+  // 1. get the solution id from the request params\
+  // 2. check if the solution exists
+  // 3. return the solution
+
+  const solutionId = req.params.solId;
+  const solution = await Solution.findById(solutionId);
+
+  if (!solution) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Solution not found"
+    );
+  }
+  solution.source_code = base64Decode(solution.source_code);
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    success: true,
+    data: solution,
   });
 });
 
 // @desc     Update a solution
-// @route     PUT /api/solutions/:id
+// @route     PUT /api/solutions/:id/:solId
 const updateSolution = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "todo",
+  // 1. get the solution id from the request params
+  // 2. check if the solution exists
+  // 3. update the solution
+  // 4. save the solution to the database
+
+  const solutionId = req.params.solId;
+  const solution = await Solution.findById(solutionId);
+  if (!solution) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Solution not found"
+    );
+  }
+  let source_code = req.body?.source_code;
+  let languageId = req.body?.languageId;
+  if (!languageId) {
+    languageId = solution.languageId;
+  }
+
+  if (source_code) {
+    source_code = base64Encode(source_code);
+  } else {
+    source_code = solution.source_code;
+  }
+
+  const validationResult = solutionValidation
+    .pick({ source_code: true, languageId: true })
+    .safeParse({
+      source_code,
+      languageId,
+    });
+  if (!validationResult.success) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      ReasonPhrases.BAD_REQUEST,
+      validationResult.error
+    );
+  }
+
+  const axoisCreateOptions = {
+    method: "POST",
+    url: `${process.env.CEE_URI}/submissions`,
+    params: {
+      base64_encoded: "true",
+      wait: "false",
+    },
+    headers: {
+      "Content-Type": "application/json",
+      "x-rapidapi-host": process.env.CEE_API_HOST,
+      "x-rapidapi-key": process.env.CEE_API_KEY,
+    },
+    data: {
+      source_code,
+      language_id: languageId,
+    },
+  };
+
+  let token = "";
+
+  try {
+    const response = await axios.request(axoisCreateOptions);
+    token = response.data.token;
+  } catch (error) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      ReasonPhrases.INTERNAL_SERVER_ERROR,
+      error.message
+    );
+  }
+
+  const result = await fetchCompilerOutput(token);
+
+  if (result.status !== StatusCodes.OK) {
+    throw new ApiError(
+      result.status,
+      "Compilation Error",
+      base64Decode(result.message)
+    );
+  }
+
+  solution.source_code = source_code;
+  solution.languageId = languageId;
+
+  await solution.save();
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    success: true,
+    data: solution,
   });
 });
 
 // @desc      Delete a solution
-// @route     DELETE /api/solutions/:id
+// @route     DELETE /api/solutions/:id/:solId
 const deleteSolution = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "todo",
+  // 1. get the solution id from the request params
+  // 2. check if the solution exists
+  // 3. delete the solution
+  // 4. remove the solution id from the problem
+  // 5. save the problem to the database
+
+  const solutionId = req.params.solId;
+  const solution = await Solution.findById(solutionId);
+  if (!solution) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Solution not found"
+    );
+  }
+
+  const problem = await Problem.findById(solution.problemId);
+  if (!problem) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Problem not found"
+    );
+  }
+
+  const index = problem.solutionIds.indexOf(solutionId);
+  if (index > -1) {
+    problem.solutionIds.splice(index, 1);
+  }
+
+  await problem.save();
+  await solution.deleteOne({ _id: solutionId });
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    success: true,
+    data: {},
   });
 });
 

@@ -14,7 +14,7 @@ import {
 
 const router = express.Router();
 
-// Main Route : BASE_URL/solution
+// Main Route : BASE_URL/solutions
 
 router
   .route("/problem/:id")
@@ -22,7 +22,7 @@ router
   .post(authenticate, authorizeProblemAuthor, createSolution);
 
 router
-  .route("/:id")
+  .route("/:id/:solId")
   .get(authenticate, authorizeProblemAuthor, getSolutionById)
   .put(authenticate, authorizeProblemAuthor, updateSolution)
   .delete(authenticate, authorizeProblemAuthor, deleteSolution);
