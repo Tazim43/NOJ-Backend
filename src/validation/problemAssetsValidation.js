@@ -9,3 +9,11 @@ export const problemStatementValidation = z.object({
   notes: z.string().optional(),
   samples: z.array(z.string()).optional(),
 });
+
+export const solutionValidation = z.object({
+  problemId: z.string().nonempty(),
+  languageId: z.number().int(),
+  source_code: z.string().nonempty(),
+  authorId: z.string().nonempty(),
+  isOptimal: z.boolean().optional(),
+});
