@@ -7,3 +7,10 @@ export const ROLES = {
   USER: "user",
   SUPER_ADMIN: "super-admin",
 };
+
+export const Languages = {
+  C: 103,
+  CPP: 105,
+  JAVA: 91,
+  PYTHON: 100,
+};
