@@ -15,12 +15,14 @@ import UserRouter from "./routes/User.router.js";
 import ProblemRouter from "./routes/Problem.router.js";
 import SolutionRouter from "./routes/Solution.router.js";
 import SubmissionRouter from "./routes/Submission.router.js";
+import TestcaseRouter from "./routes/Testcase.router.js";
 
 // define routes
 app.use(`${BASEURL}/auth`, UserRouter);
 app.use(`${BASEURL}/problems`, ProblemRouter);
 app.use(`${BASEURL}/solutions`, SolutionRouter);
 app.use(`${BASEURL}/submissions`, SubmissionRouter);
+app.use(`${BASEURL}/testcases`, TestcaseRouter);
 
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import ApiError from "./utils/apiError.js";
