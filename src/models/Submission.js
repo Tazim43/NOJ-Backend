@@ -16,25 +16,37 @@ const SubmissionSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "userId is required"],
     },
-    language: {
-      type: String,
-      required: [true, "language is required"],
+    languageId: {
+      type: Number,
+      required: [true, "languageId is required"],
     },
-    code: {
+    source_code: {
       type: String,
-      required: [true, "code is required"],
+      required: [true, "source_code is required"],
+    },
+    stdin: {
+      type: String,
+      default: null,
+    },
+    stdout: {
+      type: String,
+      default: null,
+    },
+    stderr: {
+      type: String,
+      default: null,
     },
     status: {
       type: String,
       required: [true, "status is required"],
     },
-    executionTime: {
+    cpu_time_limit: {
       type: Number,
-      required: [true, "executionTime is required"],
+      required: [true, "cpu_time_limit is required"],
     },
-    memoryUsed: {
+    memory_limit: {
       type: Number,
-      required: [true, "memoryUsed is required"],
+      required: [true, "memory_limit is required"],
     },
     verdictDetails: {
       type: String,
