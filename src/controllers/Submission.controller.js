@@ -1,4 +1,4 @@
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Get all submissions of the logged-in user
 const getAllSubmissionsOfUser = asyncHandler(async (req, res) => {
