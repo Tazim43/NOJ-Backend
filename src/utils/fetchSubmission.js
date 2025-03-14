@@ -85,3 +85,81 @@ export const fetchCompilerOutput = async (token) => {
     }
   });
 };
+
+export const fetchSingleSubmission = async (token) => {
+  return new Promise((resolve, reject) => {
+    try {
+      if (!token) {
+        return reject(
+          new ApiError(
+            StatusCodes.BAD_REQUEST,
+            ReasonPhrases.BAD_REQUEST,
+            "Submission Token is missing"
+          )
+        );
+      }
+
+      const options = {
+        method: "GET",
+        params: {
+          base64_encoded: "true",
+          fields: "time,status,memory,stdout",
+        },
+        headers: {
+          "Content-Type": "application/json",
+          "x-rapidapi-host": process.env.CEE_API_HOST,
+          "x-rapidapi-key": process.env.CEE_API_KEY,
+        },
+      };
+
+      const interval = setInterval(async () => {
+        try {
+          const URL = `${process.env.CEE_URI}/submissions/${token}`;
+          const response = await axios.request(URL, options);
+
+          console.log(response.data);
+
+          if (response.data.status?.id > 2) {
+            clearInterval(interval);
+
+            resolve({
+              status: response.data.status.id,
+              stdout: response.data.stdout,
+              time: response.data.time,
+              memory: response.data.memory,
+            });
+          }
+        } catch (error) {
+          console.log("Error in fetchSingleSubmission : ", error);
+          clearInterval(interval);
+          reject(
+            new ApiError(
+              StatusCodes.INTERNAL_SERVER_ERROR,
+              ReasonPhrases.INTERNAL_SERVER_ERROR,
+              error
+            )
+          );
+        }
+      }, 1500);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        reject(
+          new ApiError(
+            StatusCodes.REQUEST_TIMEOUT,
+            ReasonPhrases.REQUEST_TIMEOUT,
+            "Compilation took too long"
+          )
+        );
+      }, 15000);
+    } catch (error) {
+      reject(
+        new ApiError(
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          ReasonPhrases.INTERNAL_SERVER_ERROR,
+          " Error in fetchSingleSubmission"
+        )
+      );
+    }
+  });
+};

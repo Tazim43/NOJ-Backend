@@ -15,20 +15,15 @@ const TestcaseSchema = new mongoose.Schema(
       type: String,
       required: [true, "Expected Output is required"],
     },
-    explanation: {
-      type: String,
-    },
     isSample: {
       type: Boolean,
       default: false,
     },
-    validatorId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Validator",
-    },
-    weight: {
+    cpu_time: {
       type: Number,
-      default: 1,
+    },
+    memory: {
+      type: Number,
     },
   },
   {
