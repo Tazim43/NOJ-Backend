@@ -117,8 +117,6 @@ export const fetchSingleSubmission = async (token) => {
           const URL = `${process.env.CEE_URI}/submissions/${token}`;
           const response = await axios.request(URL, options);
 
-          console.log(response.data);
-
           if (response.data.status?.id > 2) {
             clearInterval(interval);
 
