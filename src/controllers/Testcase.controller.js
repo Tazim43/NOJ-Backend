@@ -17,7 +17,32 @@ const getAllTestcases = asyncHandler(async (req, res) => {
 // @route GET /api/testcases/problem/:id/testcase/:tcId
 // @desc get a testcase by id
 const getTestcaseById = asyncHandler(async (req, res) => {
-  res.json({ msg: "Get a testcase by id" });
+  // 1. Get the problem id and testcase id from the request params
+  // 2. Check if the problem exists
+  // 3. Check if the testcase exists
+  // 4. Send the response
+
+  const problemId = req.params.id;
+  const testcaseId = req.params.tcId;
+
+  const problem = await Problem.findById(problemId);
+  if (!problem) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Problem not found"
+    );
+  }
+  const testcase = await Testcase.findById(testcaseId);
+  if (!testcase) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Testcase not found"
+    );
+  }
+
+  res.status(StatusCodes.OK).json(testcase);
 });
 
 // @route POST /api/testcases/problem/:id

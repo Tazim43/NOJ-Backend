@@ -22,7 +22,7 @@ router
   .post(authenticate, authorizeProblemAuthor, createTestcase);
 
 router
-  .route("/:id/:tcId")
+  .route("/problem/:id/testcase/:tcId")
   .get(authenticate, authorizeProblemAuthor, getTestcaseById)
   .put(authenticate, authorizeProblemAuthor, updateTestcase)
   .delete(authenticate, authorizeProblemAuthor, deleteTestcase);
