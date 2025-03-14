@@ -1,6 +1,7 @@
 export const DB_NAME = "naivedb";
 export const LIMIT = "64kb";
 export const BASEURL = "/api/v1";
+export const TESTCASE_LIMIT = 45;
 
 export const ROLES = {
   ADMIN: "admin",

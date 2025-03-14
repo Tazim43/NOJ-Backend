@@ -6,7 +6,7 @@ import ApiError from "../utils/apiError.js";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import axios from "axios";
 import { fetchSingleSubmission } from "../utils/fetchSubmission.js";
-import { base64Decode } from "../utils/base64.js";
+import { TESTCASE_LIMIT } from "../constants.js";
 import { testcaseValidation } from "../validation/problemAssetsValidation.js";
 
 // @route POST /api/testcases/problem/:id
@@ -80,6 +80,15 @@ const createTestcase = asyncHandler(async (req, res) => {
       StatusCodes.NOT_FOUND,
       ReasonPhrases.NOT_FOUND,
       "Problem not found"
+    );
+  }
+
+  // check if the testcase count exit the limit
+  if (problem.testcaseIds.length >= TESTCASE_LIMIT) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      ReasonPhrases.BAD_REQUEST,
+      `Testcase limit reached. Maximum ${TESTCASE_LIMIT} testcases are allowed`
     );
   }
 
