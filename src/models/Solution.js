@@ -6,6 +6,7 @@ const SolutionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Problem",
       required: [true, "problemId is required"],
+      index: true,
     },
     languageId: {
       type: Number,
