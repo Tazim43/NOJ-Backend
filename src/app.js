@@ -31,35 +31,34 @@ import ApiError from "./utils/apiError.js";
 app.use((err, req, res, next) => {
   // Check if the error is an instance of ApiError
   if (err instanceof ApiError) {
-    console.log("msg : ", err.message);
-    console.log("errors : ", err.errors);
-    console.log("stack : ", err.stack);
-    return res.status(err.status).json({
-      status: err.status,
-      success: err.success,
+    console.log("msg:", err.message);
+    console.log("errors:", err.errors || "No additional errors");
+    console.log("stack:", err.stack);
+
+    return res.status(err.statusCode || 500).json({
+      status: err.statusCode || 500,
       message: err.message,
-      errors: err.errors,
+      errors: err.errors || null,
     });
   }
 
-  if (err.status == 413 || err.type === "entity.too.large") {
+  // Handle payload too large error
+  if (err.status === 413 || err.type === "entity.too.large") {
     return res.status(StatusCodes.REQUEST_TOO_LONG).json({
-      status: err.status,
-      success: err.success,
-      message: err.message,
-      errors: err.errors,
+      status: StatusCodes.REQUEST_TOO_LONG,
+      message: "Payload too large",
+      errors: err.errors || null,
     });
   }
 
-  console.log("new error", err.message);
-  console.log("new errors: ", err.errors);
-  console.log("new stack: ", err.stack);
-  // Handle other types of errors
-  return res.status().json({
-    hint: "Final error",
+  // Log all other errors
+  console.error("Unhandled error:", err);
+
+  // Handle other unknown errors
+  return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
     status: StatusCodes.INTERNAL_SERVER_ERROR,
     message: ReasonPhrases.INTERNAL_SERVER_ERROR,
-    errors: err.errors,
+    errors: err.errors || null,
   });
 });
 
