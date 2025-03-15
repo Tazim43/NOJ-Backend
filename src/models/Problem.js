@@ -48,6 +48,12 @@ const ProblemSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Contest",
     },
+    submissionIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Submission",
+      },
+    ],
     tags: [
       {
         type: String,

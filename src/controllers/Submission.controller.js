@@ -6,6 +6,7 @@ import {
   MAX_TIME_LIMIT,
   MIN_MEMORY_LIMIT,
   VERDICTS,
+  axoisCEEHeaders,
   supportedLanguages,
 } from "../constants.js";
 import axios from "axios";
@@ -34,6 +35,8 @@ const submitSolution = asyncHandler(async (req, res) => {
   // 3. Send the submission to the judge queue
   // 4. get the submission details
   // 5. Save the submission details in the database
+  // 5.1 add the submissionId to the problem
+  // 5.2 add the submissionId to the user
   // 6. Return the submission details
 
   const problemId = req.params.id;
@@ -109,6 +112,15 @@ const submitSolution = asyncHandler(async (req, res) => {
     submissions: [],
   };
 
+  // check if the problem has any testcases
+  if (!testCases.testcaseIds.length) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      ReasonPhrases.BAD_REQUEST,
+      "No testcases found for the problem"
+    );
+  }
+
   // create submission data for all test cases
   for (let i = 0; i < testCases.testcaseIds.length; i++) {
     const currentSubmission = {
@@ -134,11 +146,7 @@ const submitSolution = asyncHandler(async (req, res) => {
       base64_encoded: "true",
       wait: "false",
     },
-    headers: {
-      "Content-Type": "application/json",
-      "x-rapidapi-host": process.env.CEE_API_HOST,
-      "x-rapidapi-key": process.env.CEE_API_KEY,
-    },
+    headers: axoisCEEHeaders,
     data: submissionData,
   };
   let tokens = [];
@@ -153,8 +161,6 @@ const submitSolution = asyncHandler(async (req, res) => {
       error
     );
   }
-
-  console.log(tokens);
 
   const testCasesData = [];
   for (let i = 0; i < tokens.length; i++) {
@@ -180,6 +186,123 @@ const submitSolution = asyncHandler(async (req, res) => {
 
   // save the submission in the database
   const submissionResult = await Submission.create(submission);
+
+  // add the submissionId to the problem
+  problem.submissionIds.push(submissionResult._id);
+  await problem.save();
+  // add the submissionId to the user
+  req.user.submissions.push(submissionResult._id);
+  await req.user.save();
+
+  // continously fetch the results from the judge queue untill all test cases are judged
+  // @ TODO : use websockets or long polling to get the results & improve performance
+  // @ WARNING : this is a very costly operation and should be optimized
+
+  const axoisGetOptions = {
+    method: "GET",
+    url: `${process.env.CEE_URI}/submissions/batch`,
+    params: {
+      base64_encoded: "true",
+      fields: "time,status,memory,stdout",
+      tokens: tokens.map((token) => token.token).join(","), // get the tokens from the response
+    },
+    headers: axoisCEEHeaders,
+  };
+
+  const interval = setInterval(async () => {
+    try {
+      if (submissionResult.finalVerdict !== VERDICTS.PENDING) {
+        clearInterval(interval);
+      }
+      let lastestResult = await axios.request(axoisGetOptions);
+      lastestResult = lastestResult.data.submissions;
+
+      // check for compilation error
+      if (lastestResult.length > 0 && lastestResult[0].compile_output != null) {
+        submissionResult.finalVerdict = VERDICTS.CE;
+        clearInterval(interval);
+      }
+
+      // check if all testcases are judged
+      let isAllJudged = true;
+      let skip = false;
+
+      for (let i = 0; i < lastestResult.length; i++) {
+        const currentTestcase = lastestResult[i];
+
+        if (skip) {
+          submissionResult.testCaseResults[i].verdict = VERDICTS.SKIPPED;
+          continue;
+        }
+
+        if (currentTestcase.status.id <= 2) {
+          isAllJudged = false;
+          break;
+        } else if (currentTestcase.status.id === 3) {
+          submissionResult.finalVerdict = VERDICTS.AC;
+          submissionResult.testCaseResults[i].verdict = VERDICTS.AC;
+          await submissionResult.save();
+        } else {
+          skip = true;
+
+          switch (currentTestcase.status.id) {
+            case 4:
+              submissionResult.finalVerdict = VERDICTS.WA;
+              submissionResult.testCaseResults[i].verdict = VERDICTS.WA;
+              break;
+            case 5:
+              submissionResult.finalVerdict = VERDICTS.TLE;
+              submissionResult.testCaseResults[i].verdict = VERDICTS.TLE;
+              break;
+            case 6:
+              submissionResult.finalVerdict = VERDICTS.CE;
+              submissionResult.testCaseResults[i].verdict = VERDICTS.CE;
+              break;
+            default:
+              submissionResult.finalVerdict = VERDICTS.RE;
+              submissionResult.testCaseResults[i].verdict = VERDICTS.RE;
+              break;
+          }
+        }
+
+        await submissionResult.save();
+
+        if (isAllJudged) {
+          clearInterval(interval);
+        }
+      }
+    } catch (error) {
+      console.log("Error in fetching all testcases output : ", error);
+      clearInterval(interval);
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        "Error in fetching all testcases output",
+        error
+      );
+    }
+  }, 5000);
+
+  setTimeout(() => {
+    clearInterval(interval);
+
+    if (submissionResult.finalVerdict === VERDICTS.PENDING) {
+      submissionResult.finalVerdict = VERDICTS.TLE;
+
+      for (let i = 0; i < submissionResult.testCaseResults.length; i++) {
+        if (submissionResult.testCaseResults[i].verdict === VERDICTS.PENDING) {
+          submissionResult.testCaseResults[i].verdict = VERDICTS.TLE;
+          break;
+        }
+      }
+      for (let i = 0; i < submissionResult.testCaseResults.length; i++) {
+        if (submissionResult.testCaseResults[i].verdict === VERDICTS.PENDING) {
+          submissionResult.testCaseResults[i].verdict = VERDICTS.SKIPPED;
+        }
+      }
+
+      submissionResult.save();
+    }
+  }, 10 * 5000);
 
   res.status(StatusCodes.CREATED).json({
     submissionResult,
