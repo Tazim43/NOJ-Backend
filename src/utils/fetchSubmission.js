@@ -2,6 +2,7 @@ import ApiError from "./apiError.js";
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import dotenv from "dotenv";
 import axios from "axios";
+import { axoisCEEHeaders } from "../constants.js";
 
 dotenv.config();
 
@@ -24,11 +25,7 @@ export const fetchCompilerOutput = async (token) => {
           base64_encoded: "true",
           fields: "compile_output,status",
         },
-        headers: {
-          "Content-Type": "application/json",
-          "x-rapidapi-host": process.env.CEE_API_HOST,
-          "x-rapidapi-key": process.env.CEE_API_KEY,
-        },
+        headers: axoisCEEHeaders,
       };
 
       const interval = setInterval(async () => {
@@ -105,11 +102,7 @@ export const fetchSingleSubmission = async (token) => {
           base64_encoded: "true",
           fields: "time,status,memory,stdout",
         },
-        headers: {
-          "Content-Type": "application/json",
-          "x-rapidapi-host": process.env.CEE_API_HOST,
-          "x-rapidapi-key": process.env.CEE_API_KEY,
-        },
+        headers: axoisCEEHeaders,
       };
 
       const interval = setInterval(async () => {

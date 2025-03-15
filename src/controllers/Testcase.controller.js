@@ -6,7 +6,7 @@ import ApiError from "../utils/apiError.js";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import axios from "axios";
 import { fetchSingleSubmission } from "../utils/fetchSubmission.js";
-import { TESTCASE_LIMIT } from "../constants.js";
+import { axoisCEEHeaders, TESTCASE_LIMIT } from "../constants.js";
 import { testcaseValidation } from "../validation/problemAssetsValidation.js";
 
 // @route POST /api/testcases/problem/:id
@@ -127,11 +127,7 @@ const createTestcase = asyncHandler(async (req, res) => {
         base64_encoded: "true",
         wait: false,
       },
-      headers: {
-        "Content-Type": "application/json",
-        "x-rapidapi-host": process.env.CEE_API_HOST,
-        "x-rapidapi-key": process.env.CEE_API_KEY,
-      },
+      headers: axoisCEEHeaders,
       data: {
         source_code: solution.source_code,
         language_id: solution.languageId,
@@ -247,11 +243,7 @@ const updateTestcase = asyncHandler(async (req, res) => {
         base64_encoded: "true",
         wait: false,
       },
-      headers: {
-        "Content-Type": "application/json",
-        "x-rapidapi-host": process.env.CEE_API_HOST,
-        "x-rapidapi-key": process.env.CEE_API_KEY,
-      },
+      headers: axoisCEEHeaders,
       data: {
         source_code: solution.source_code,
         language_id: solution.languageId,

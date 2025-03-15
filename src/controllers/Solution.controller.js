@@ -7,6 +7,7 @@ import ApiError from "../utils/apiError.js";
 import axios from "axios";
 import { base64Decode } from "../utils/base64.js";
 import { fetchCompilerOutput } from "../utils/fetchSubmission.js";
+import { axoisCEEHeaders } from "../constants.js";
 
 // @desc      Get all solutions of a problem
 // @route     GET /api/solutions/problem/:id
@@ -104,11 +105,7 @@ const createSolution = asyncHandler(async (req, res) => {
       base64_encoded: "true",
       wait: "false",
     },
-    headers: {
-      "Content-Type": "application/json",
-      "x-rapidapi-host": process.env.CEE_API_HOST,
-      "x-rapidapi-key": process.env.CEE_API_KEY,
-    },
+    headers: axoisCEEHeaders,
     data: {
       source_code,
       language_id: languageId,
@@ -241,11 +238,7 @@ const updateSolution = asyncHandler(async (req, res) => {
       base64_encoded: "true",
       wait: "false",
     },
-    headers: {
-      "Content-Type": "application/json",
-      "x-rapidapi-host": process.env.CEE_API_HOST,
-      "x-rapidapi-key": process.env.CEE_API_KEY,
-    },
+    headers: axoisCEEHeaders,
     data: {
       source_code,
       language_id: languageId,
