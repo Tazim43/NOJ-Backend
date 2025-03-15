@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { VERDICTS } from "../constants.js";
 
 const SubmissionSchema = new mongoose.Schema(
   {
@@ -24,45 +25,51 @@ const SubmissionSchema = new mongoose.Schema(
       type: String,
       required: [true, "source_code is required"],
     },
-    stdin: {
+    finalVerdict: {
       type: String,
-      default: null,
-    },
-    stdout: {
-      type: String,
-      default: null,
-    },
-    stderr: {
-      type: String,
-      default: null,
-    },
-    status: {
-      type: String,
-      required: [true, "status is required"],
-    },
-    cpu_time_limit: {
-      type: Number,
-      required: [true, "cpu_time_limit is required"],
-    },
-    memory_limit: {
-      type: Number,
-      required: [true, "memory_limit is required"],
-    },
-    verdictDetails: {
-      type: String,
-      required: [true, "verdictDetails is required"],
+      enum: [
+        VERDICTS.AC,
+        VERDICTS.WA,
+        VERDICTS.TLE,
+        VERDICTS.MLE,
+        VERDICTS.RE,
+        VERDICTS.CE,
+        VERDICTS.SKIPPED,
+        VERDICTS.PENDING,
+      ],
+      default: VERDICTS.PENDING,
     },
     testCaseResults: [
       {
-        testCaseId: String,
-        status: String,
+        token: {
+          type: String,
+          required: [true, "token for testCaseResults is required"],
+        },
+        verdict: {
+          type: String,
+          enum: [
+            VERDICTS.AC,
+            VERDICTS.WA,
+            VERDICTS.TLE,
+            VERDICTS.MLE,
+            VERDICTS.RE,
+            VERDICTS.CE,
+            VERDICTS.SKIPPED,
+            VERDICTS.PENDING,
+          ],
+          default: "PENDING",
+        },
         executionTime: Number,
         memoryUsed: Number,
       },
     ],
-    rejudged: {
-      type: Boolean,
-      default: false,
+    executionTime: {
+      type: Number,
+      default: 0,
+    },
+    memoryUsed: {
+      type: Number,
+      default: 0,
     },
     isPublic: {
       type: Boolean,
