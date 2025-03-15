@@ -11,18 +11,69 @@ import {
 } from "../constants.js";
 import axios from "axios";
 import Submission from "../models/Submission.js";
+import User from "../models/User.js";
 
-// Get all submissions of the logged-in user
+// @Route : GET /api/submissions/my
+// @DESC : Get all submissions of the user
 const getAllSubmissionsOfUser = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  // 1. Extract the user ID from the authenticated user in the request object
+  const userId = req.user._id;
+
+  // 2. Query the database to get all submissions for the authenticated user
+  const submissions = await User.findById(userId)
+    .populate(
+      "submissions",
+      "_id executionTime finalVerdict createdAt memoryUsed languageId"
+    )
+    .select("_id")
+    .exec();
+
+  // 3. Check if no submissions are found
+  if (!submissions || submissions.length === 0) {
+    return res.status(StatusCodes.NOT_FOUND).json({
+      status: StatusCodes.NOT_FOUND,
+      success: false,
+      message: "No submissions found for this user.",
+    });
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    success: true,
+    data: submissions,
   });
 });
 
-// Get all submissions of a specific problem
+// @Route : GET /api/submissions/problems/:id
+// @DESC : Get all submissions of a problem
 const getAllSubmissionsOfProblem = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  // 1. Get the problem id from the request params
+  // 2. Check if the problem exists
+  // 3. Get the submission ids from the problem
+  // 4. Get all the submissions from the database
+  // 5. Return the submissions
+
+  const problemId = req.params.id;
+  let problem = await Problem.findById(problemId)
+    .populate(
+      "submissionIds",
+      "_id finalVerdict executionTime memoryUsed createdAt "
+    )
+    .select("_id")
+    .exec();
+
+  if (!problem) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Problem not found"
+    );
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    success: true,
+    data: problem,
   });
 });
 
