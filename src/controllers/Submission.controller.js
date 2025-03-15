@@ -72,9 +72,12 @@ const submitSolution = asyncHandler(async (req, res) => {
 
   // check if the submission already exists
   const existingSubmission = await Submission.exists({
-    problemId,
-    source_code,
-    userId: req.user._id,
+    $and: [
+      { problemId },
+      { source_code },
+      { userId: req.user._id },
+      { language_id: languageId },
+    ],
   });
 
   if (existingSubmission) {
