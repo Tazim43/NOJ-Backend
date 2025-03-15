@@ -99,11 +99,15 @@ const authorizeProblemAuthor = asyncHandler(async (req, _, next) => {
 
 const authorizeSubmissionAuthor = asyncHandler(async (req, _, next) => {
   try {
-    const submissionId = req.params.id;
+    const submissionId = req.params.subID;
     const user = req.user;
     const submission = await Submission.findById(submissionId);
     if (!submission) {
-      throw new ApiError(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND);
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        ReasonPhrases.NOT_FOUND,
+        "Submission not found"
+      );
     }
 
     if (submission.isPublic) {

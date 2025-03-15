@@ -209,6 +209,7 @@ const submitSolution = asyncHandler(async (req, res) => {
     headers: axoisCEEHeaders,
   };
 
+  // fetch the results from the judge queue
   const interval = setInterval(async () => {
     try {
       if (submissionResult.finalVerdict !== VERDICTS.PENDING) {
@@ -220,6 +221,8 @@ const submitSolution = asyncHandler(async (req, res) => {
       // check for compilation error
       if (lastestResult.length > 0 && lastestResult[0].compile_output != null) {
         submissionResult.finalVerdict = VERDICTS.CE;
+        submissionResult.testCaseResults[0].verdict = VERDICTS.CE;
+        await submissionResult.save();
         clearInterval(interval);
       }
 
@@ -234,17 +237,32 @@ const submitSolution = asyncHandler(async (req, res) => {
           submissionResult.testCaseResults[i].verdict = VERDICTS.SKIPPED;
           continue;
         }
-
+        // check if the testcase is not judged
         if (currentTestcase.status.id <= 2) {
           isAllJudged = false;
           break;
-        } else if (currentTestcase.status.id === 3) {
+        }
+        // check if the testcase is accepted
+        else if (currentTestcase.status.id === 3) {
           submissionResult.finalVerdict = VERDICTS.AC;
           submissionResult.testCaseResults[i].verdict = VERDICTS.AC;
+          submissionResult.testCaseResults[i].executionTime =
+            currentTestcase.time;
+          submissionResult.testCaseResults[i].memoryUsed =
+            currentTestcase.memory;
+
           await submissionResult.save();
-        } else {
+        }
+        // check if the testcase is wrong answer
+        else {
           skip = true;
 
+          submissionResult.testCaseResults[i].executionTime =
+            currentTestcase.time;
+          submissionResult.testCaseResults[i].memoryUsed =
+            currentTestcase.memory;
+
+          // set the final verdict based on the testcase status
           switch (currentTestcase.status.id) {
             case 4:
               submissionResult.finalVerdict = VERDICTS.WA;
@@ -264,12 +282,12 @@ const submitSolution = asyncHandler(async (req, res) => {
               break;
           }
         }
+      }
 
-        await submissionResult.save();
+      await submissionResult.save();
 
-        if (isAllJudged) {
-          clearInterval(interval);
-        }
+      if (isAllJudged) {
+        clearInterval(interval);
       }
     } catch (error) {
       console.log("Error in fetching all testcases output : ", error);
@@ -305,14 +323,35 @@ const submitSolution = asyncHandler(async (req, res) => {
   }, 10 * 5000);
 
   res.status(StatusCodes.CREATED).json({
-    submissionResult,
+    status: StatusCodes.CREATED,
+    success: true,
+    data: submissionResult,
   });
 });
 
-// Get details of a specific submission. if user, show it or check if it is public or not
+// @route GET /api/submissions/:subID
+// @desc Get the details of a specific submission
 const getSubmissionDetails = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
+  // 1. Get the submission id from the request params
+  // 2. Get the submission details from the database
+  // 3. Check if the submission exists
+  // 4. send the submission details
+
+  const submissionId = req.params.subID;
+  const submission = await Submission.findById(submissionId);
+
+  if (!submission) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Submission not found"
+    );
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    success: true,
+    data: submission,
   });
 });
 
