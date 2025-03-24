@@ -6,6 +6,7 @@ import { axoisCEEHeaders } from "../constants.js";
 
 dotenv.config();
 
+// @DESC : Fetch the submission details from the compiler
 export const fetchCompilerOutput = async (token) => {
   return new Promise((resolve, reject) => {
     try {
@@ -83,6 +84,8 @@ export const fetchCompilerOutput = async (token) => {
   });
 };
 
+// @DESC : Fetch a single submission from the CEE
+// @INPUT token
 export const fetchSingleSubmission = async (token) => {
   return new Promise((resolve, reject) => {
     try {
