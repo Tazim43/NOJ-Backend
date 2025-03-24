@@ -1,10 +1,15 @@
 import express from "express";
 import { BASEURL, LIMIT } from "./constants.js";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 const app = express();
 
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS.split(",");
+const credentials = process.env.CORS_CREDENTIALS === "true"; // Convert to boolean
+
 // app config
+app.use(cors({ origin: allowedOrigins, credentials: credentials })); // enable cors
 app.use(express.json({ limit: LIMIT }));
 app.use(express.urlencoded({ limit: LIMIT }));
 app.use(express.static("public"));
