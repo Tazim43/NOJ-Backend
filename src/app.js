@@ -26,6 +26,7 @@ app.use(`${BASEURL}/testcases`, TestcaseRouter);
 
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import ApiError from "./utils/apiError.js";
+import ResponseHandler from "./utils/responseHandler.js";
 
 // Custom error-handling middleware
 app.use((err, req, res, next) => {
@@ -35,31 +36,30 @@ app.use((err, req, res, next) => {
     console.log("errors:", err.errors || "No additional errors");
     console.log("stack:", err.stack);
 
-    return res.status(err.statusCode || 500).json({
-      status: err.statusCode || 500,
-      message: err.message,
-      errors: err.errors || null,
-    });
+    // res, error = [], message = "something went wrong", statutCode = 500
+    return ResponseHandler.error(res, err.errors, err.message, err.statusCode);
   }
 
   // Handle payload too large error
   if (err.status === 413 || err.type === "entity.too.large") {
-    return res.status(StatusCodes.REQUEST_TOO_LONG).json({
-      status: StatusCodes.REQUEST_TOO_LONG,
-      message: "Payload too large",
-      errors: err.errors || null,
-    });
+    return ResponseHandler.error(
+      res,
+      err.errors,
+      ReasonPhrases.REQUEST_TOO_LONG,
+      StatusCodes.REQUEST_TOO_LONG
+    );
   }
 
   // Log all other errors
   console.error("Unhandled error:", err);
 
   // Handle other unknown errors
-  return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-    status: StatusCodes.INTERNAL_SERVER_ERROR,
-    message: ReasonPhrases.INTERNAL_SERVER_ERROR,
-    errors: err.errors || null,
-  });
+  return ResponseHandler.error(
+    res,
+    err.errors,
+    ReasonPhrases.INTERNAL_SERVER_ERROR,
+    StatusCodes.INTERNAL_SERVER_ERROR
+  );
 });
 
 app.get(`${BASEURL}/`, (req, res) => {

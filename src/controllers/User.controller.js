@@ -4,7 +4,8 @@ import userValidationSchema from "../validation/userValidationSchema.js";
 import { uploadOnCloudinary } from "../utils/Cloudinary.js";
 import apiError from "../utils/apiError.js";
 import fs from "fs";
-import { ReasonPhrases, StatusCodes } from "http-status-codes";
+import { StatusCodes } from "http-status-codes";
+import ResponseHandler from "../utils/responseHandler.js";
 
 const registerUser = asyncHandler(async (req, res) => {
   const userData = {
@@ -24,7 +25,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     throw new apiError(
       StatusCodes.BAD_REQUEST,
-      ReasonPhrases.BAD_REQUEST,
+      "Invalid user data",
       validationResult.error.errors
     );
   }
@@ -35,7 +36,12 @@ const registerUser = asyncHandler(async (req, res) => {
   });
   if (userExists) {
     if (userData.avatarUrl) fs.unlinkSync(userData.avatarUrl);
-    return res.status(400).json({ msg: "User already exists" });
+    return ResponseHandler.error(
+      res,
+      [],
+      "User already exists",
+      StatusCodes.BAD_REQUEST
+    );
   }
 
   // Upload avatar to Cloudinary and get the URL
@@ -51,15 +57,21 @@ const registerUser = asyncHandler(async (req, res) => {
 
   await newUser.save();
 
-  res.status(201).json({
-    user: {
-      id: newUser._id,
-      username: newUser.username,
-      fullName: newUser.fullName,
-      email: newUser.email,
-      avatarUrl: newUser.avatarUrl,
+  // res, data = {}, message = "successfull", statusCode = 200
+  return ResponseHandler.success(
+    res,
+    {
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        avatarUrl: newUser.avatarUrl,
+      },
     },
-  });
+    "User created successfully",
+    StatusCodes.CREATED
+  );
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -78,7 +90,7 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!validationResult.success) {
     throw new apiError(
       StatusCodes.BAD_REQUEST,
-      ReasonPhrases.BAD_REQUEST,
+      "Invalid email or password",
       validationResult.error.errors
     );
   }
@@ -94,9 +106,12 @@ const loginUser = asyncHandler(async (req, res) => {
   // Check if password is correct
   const isPasswordValid = await user.isPasswordCorrect(userData.password);
   if (!isPasswordValid) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Invalid credentials" });
+    return ResponseHandler.error(
+      res,
+      [],
+      "Invalid credentials",
+      StatusCodes.BAD_REQUEST
+    );
   }
 
   // Generate JWT token
@@ -116,16 +131,22 @@ const loginUser = asyncHandler(async (req, res) => {
     sameSite: "strict", // Cookie will only be sent to the same site
   });
 
-  res.json({
-    user: {
-      id: user._id,
-      username: user.username,
-      fullName: user.fullName,
-      email: user.email,
-      avatar: user.avatar,
+  // res, data = {}, message = "successfull", statusCode = 200
+  return ResponseHandler.success(
+    res,
+    {
+      user: {
+        id: user._id,
+        username: user.username,
+        fullName: user.fullName,
+        email: user.email,
+        avatar: user.avatar,
+      },
+      token,
     },
-    token,
-  });
+    "Login successful",
+    StatusCodes.OK
+  );
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
