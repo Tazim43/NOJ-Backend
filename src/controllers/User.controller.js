@@ -140,7 +140,7 @@ const loginUser = asyncHandler(async (req, res) => {
         username: user.username,
         fullName: user.fullName,
         email: user.email,
-        avatar: user.avatar,
+        avatar: user.avatarUrl,
       },
       token,
     },
