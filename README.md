@@ -11,6 +11,10 @@ NaiveOJ is an **online judge platform** designed for hosting programming contest
 - ✔ **Leaderboards & Ratings** – Track user performance and rankings
 - ✔ **Admin Controls** – Manage users, problems, and system settings
 
+## 🧩 Database Design
+
+You can explore the Entity-Relationship (ER) diagram for NaiveOJ [here](https://app.eraser.io/workspace/Q4gc6zQylAn8EwUflISf?origin=share).
+
 ## 🚀 Tech Stack
 
 - 🔹 **Backend** – Node.js, Express.js
