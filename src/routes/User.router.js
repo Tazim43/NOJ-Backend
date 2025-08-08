@@ -1,26 +1,15 @@
 import { Router } from "express";
 import {
-  registerUser,
-  loginUser,
+  googleCallback,
   logoutUser,
-  resetPassword,
-  refreshToken,
-  changePassword,
+  getCurrentUser,
 } from "../controllers/User.controller.js";
-import {
-  authenticate,
-  authorize,
-  verifyRefreshToken,
-} from "../middlewares/auth.middleware.js";
-import { upload } from "../middlewares/upload.middleware.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.route("/register").post(upload.single("avatar"), registerUser);
-router.route("/login").post(loginUser);
+router.route("/google/callback").get(googleCallback);
+router.route("/me").get(authenticate, getCurrentUser);
 router.route("/logout").post(authenticate, logoutUser);
-router.route("/reset-password").post(authenticate, resetPassword);
-router.route("refresh-token").post(verifyRefreshToken, refreshToken);
-router.route("/change-password").post(authenticate, changePassword);
 
 export default router;

@@ -18,10 +18,6 @@ const userValidationSchema = z.object({
     .email({ message: "Invalid email address" })
     .transform((val) => val.trim().toLowerCase()), // Trim and convert to lowercase
 
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters" }),
-
   fullName: z
     .string()
     .min(1, { message: "Full name is required" })

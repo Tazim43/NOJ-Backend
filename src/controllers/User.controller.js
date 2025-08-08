@@ -1,190 +1,181 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import User from "../models/User.js";
-import userValidationSchema from "../validation/userValidationSchema.js";
-import { uploadOnCloudinary } from "../utils/Cloudinary.js";
-import apiError from "../utils/apiError.js";
-import fs from "fs";
 import { StatusCodes } from "http-status-codes";
 import ResponseHandler from "../utils/responseHandler.js";
 
-const registerUser = asyncHandler(async (req, res) => {
-  const userData = {
-    username: req.body.username,
-    email: req.body.email,
-    password: req.body.password,
-    fullName: req.body.fullName,
-    avatarUrl: req.file?.path,
-  };
+import { OAuth2Client } from "google-auth-library";
 
-  const validationResult = userValidationSchema.safeParse(userData);
+const client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI
+);
 
-  if (!validationResult.success) {
-    if (userData.avatarUrl) {
-      fs.unlinkSync(userData.avatarUrl);
+const googleCallback = asyncHandler(async (req, res) => {
+  const code = req.query?.code;
+
+  if (!code) {
+    return ResponseHandler.error(
+      res,
+      [],
+      "Google authentication code is required",
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  try {
+    const { tokens } = await client.getToken(code);
+
+    if (!tokens || !tokens.id_token) {
+      return ResponseHandler.error(
+        res,
+        [],
+        "Failed to retrieve tokens from Google",
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
     }
 
-    throw new apiError(
-      StatusCodes.BAD_REQUEST,
-      "Invalid user data",
-      validationResult.error.errors
-    );
-  }
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
 
-  // Check if user already exists
-  const userExists = await User.findOne({
-    $or: [{ username: userData.username }, { email: userData.email }],
-  });
-  if (userExists) {
-    if (userData.avatarUrl) fs.unlinkSync(userData.avatarUrl);
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub } = payload;
+    if (!email) {
+      res.redirect(`${process.env.CLIENT_URL}?error=Invalid Google user data`);
+    }
+
+    let user = await User.findOne({ email: email });
+
+    if (!user) {
+      const query = {
+        email: email,
+        username: email.split("@")[0],
+        fullName: name,
+        avatarUrl: picture,
+        googleId: sub,
+      };
+
+      user = await User.create(query);
+    }
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.accessToken = accessToken;
+    user.refreshToken = refreshToken;
+    user.googleId = sub;
+    user.avatarUrl = picture;
+    user.fullName = name;
+
+    await user.save();
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+    });
+
+    res.redirect(process.env.CLIENT_URL || "http://localhost:3000");
+  } catch (error) {
     return ResponseHandler.error(
       res,
-      [],
-      "User already exists",
-      StatusCodes.BAD_REQUEST
+      [error],
+      "Failed to exchange Google authentication code",
+      StatusCodes.INTERNAL_SERVER_ERROR
     );
   }
-
-  // Upload avatar to Cloudinary and get the URL
-  if (userData.avatarUrl) {
-    userData.avatarUrl = await uploadOnCloudinary(
-      userData.avatarUrl,
-      "avatars"
-    );
-  }
-
-  // Save user to database
-  const newUser = new User(userData);
-
-  await newUser.save();
-
-  // res, data = {}, message = "successfull", statusCode = 200
-  return ResponseHandler.success(
-    res,
-    {
-      user: {
-        id: newUser._id,
-        username: newUser.username,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        avatarUrl: newUser.avatarUrl,
-      },
-    },
-    "User created successfully",
-    StatusCodes.CREATED
-  );
 });
 
-const loginUser = asyncHandler(async (req, res) => {
-  const userData = {
-    email: req.body.email,
-    password: req.body.password,
-  };
-
-  const validationResult = userValidationSchema
-    .pick({
-      email: true,
-      password: true,
-    })
-    .safeParse(userData);
-
-  if (!validationResult.success) {
-    throw new apiError(
-      StatusCodes.BAD_REQUEST,
-      "Invalid email or password",
-      validationResult.error.errors
-    );
-  }
-
-  // Check if user exists
-  const user = await User.findOne({ email: userData.email });
+const logoutUser = asyncHandler(async (req, res) => {
+  const user = req.user?._id;
   if (!user) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Invalid credentials" });
-  }
-
-  // Check if password is correct
-  const isPasswordValid = await user.isPasswordCorrect(userData.password);
-  if (!isPasswordValid) {
     return ResponseHandler.error(
       res,
       [],
-      "Invalid credentials",
-      StatusCodes.BAD_REQUEST
+      "User not Provided",
+      StatusCodes.NOT_FOUND
     );
   }
 
-  // Generate JWT token
-  const token = user.generateAccessToken();
+  const foundUser = await User.findById(user);
+  if (!foundUser) {
+    return ResponseHandler.error(
+      res,
+      [],
+      "User not found",
+      StatusCodes.NOT_FOUND
+    );
+  }
 
-  // Generate refresh token
-  const refreshToken = user.generateRefreshToken();
+  foundUser.refreshToken = null;
+  foundUser.accessToken = null;
+  await foundUser.save();
 
-  // Save refresh token to database
-  user.refreshToken = refreshToken;
-
-  await user.save();
-
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true, // Cookie cannot be accessed by client-side scripts
-    secure: true, // Cookie will only be sent over HTTPS
-    sameSite: "strict", // Cookie will only be sent to the same site
+  // Clear cookies with same options as when they were set
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
   });
 
-  // res, data = {}, message = "successfull", statusCode = 200
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+  });
+
   return ResponseHandler.success(
     res,
-    {
-      user: {
-        id: user._id,
-        username: user.username,
-        fullName: user.fullName,
-        email: user.email,
-        avatar: user.avatarUrl,
-      },
-      token,
-    },
-    "Login successful",
+    [],
+    "User logged out successfully",
     StatusCodes.OK
   );
 });
 
-const logoutUser = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
-  });
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  if (!user) {
+    return ResponseHandler.error(
+      res,
+      [],
+      "User not found",
+      StatusCodes.NOT_FOUND
+    );
+  }
+
+  const userData = {
+    _id: user._id,
+    email: user.email,
+    username: user.username,
+    fullName: user.fullName,
+    avatarUrl: user.avatarUrl,
+    googleId: user.googleId,
+    role: user.role,
+    bio: user.bio,
+    organization: user.organization,
+    country: user.country,
+    rating: user.rating,
+    solvedCount: user.solvedCount,
+    createdAt: user.createdAt,
+  };
+
+  return ResponseHandler.success(
+    res,
+    userData,
+    "Current user retrieved successfully",
+    StatusCodes.OK
+  );
 });
 
-const resetPassword = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
-  });
-});
-
-const refreshToken = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
-  });
-});
-
-const verifyEmail = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
-  });
-});
-
-const changePassword = asyncHandler(async (req, res) => {
-  res.json({
-    msg: "TODO",
-  });
-});
-
-export {
-  registerUser,
-  loginUser,
-  logoutUser,
-  resetPassword,
-  refreshToken,
-  verifyEmail,
-  changePassword,
-};
+export { googleCallback, logoutUser, getCurrentUser };

@@ -1,9 +1,15 @@
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const UserSchema = new mongoose.Schema(
   {
+    googleId: {
+      type: String,
+      required: [true, "Google ID is required"],
+      unique: [true, "Google ID already exists"],
+      trim: true,
+      index: true,
+    },
     username: {
       type: String,
       required: [true, "username is required"],
@@ -20,23 +26,11 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
-    password: {
-      type: String,
-      required: [true, "password is required"],
-    },
-    passwordResetToken: {
+    accessToken: {
       type: String,
       default: null,
     },
     refreshToken: {
-      type: String,
-      default: null,
-    },
-    emailVerified: {
-      type: Boolean,
-      default: false,
-    },
-    emailVerificationToken: {
       type: String,
       default: null,
     },
@@ -66,10 +60,6 @@ const UserSchema = new mongoose.Schema(
     rating: {
       type: Number,
       default: 0,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
     },
     solvedCount: {
       type: Number,
@@ -122,29 +112,8 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
-UserSchema.pre("save", async function (next) {
-  if (this.isModified("password")) {
-    try {
-      const salt = await bcrypt.genSalt(10);
-      this.password = await bcrypt.hash(this.password, salt);
-      next();
-    } catch (err) {
-      next(err);
-    }
-  } else {
-    next();
-  }
-});
-
-UserSchema.methods.isPasswordCorrect = async function (password) {
-  try {
-    return await bcrypt.compare(password, this.password);
-  } catch (err) {
-    throw new Error(err);
-  }
-};
-
 UserSchema.methods.generateAccessToken = function () {
+  console.log("Generating access token for user:", this._id);
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });

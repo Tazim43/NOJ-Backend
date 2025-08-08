@@ -11,7 +11,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 // Check if the user is authenticated using JWT token in the request header or cookie
 const authenticate = asyncHandler(async (req, _, next) => {
   try {
-    // Get the token from the request header or cookie
     const token =
       req.cookies?.accessToken ||
       req.header("Authorization")?.replace("Bearer ", "");
@@ -32,6 +31,9 @@ const authenticate = asyncHandler(async (req, _, next) => {
         error
       );
     }
+    if (!decoded || !decoded.id) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
+    }
 
     // Find the user by the id in the token
     const user = await User.findById(decoded.id).select(
@@ -43,6 +45,7 @@ const authenticate = asyncHandler(async (req, _, next) => {
     }
     // Set the user in the request object
     req.user = user;
+    console.log("User authenticated:", user.email);
     next();
   } catch (error) {
     if (error instanceof ApiError) {
@@ -65,6 +68,30 @@ const authorize = (...roles) => {
     next();
   };
 };
+
+const authenticateUser = asyncHandler(async (req, res, next) => {
+  try {
+    const token = req.cookies?.accessToken; // assuming your cookie name is 'token'
+
+    if (!token) {
+      res.status(401);
+      throw new Error("Not authorized, token missing");
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    // Fetch the full user object from the database using the decoded id
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      res.status(401);
+      throw new Error("Not authorized, user not found");
+    }
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401);
+    throw new Error("Not authorized, token invalid");
+  }
+});
 
 // Authorize Problem author
 const authorizeProblemAuthor = asyncHandler(async (req, _, next) => {
@@ -177,4 +204,5 @@ export {
   authorizeProblemAuthor,
   verifyRefreshToken,
   authorizeSubmissionAuthor,
+  authenticateUser,
 };
