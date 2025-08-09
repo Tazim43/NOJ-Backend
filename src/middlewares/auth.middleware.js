@@ -59,6 +59,62 @@ const authenticate = asyncHandler(async (req, _, next) => {
   }
 });
 
+// Middleware to authenticate Admin users
+const authenticateAdmin = asyncHandler(async (req, res, next) => {
+  try {
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (error) {
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED,
+        ReasonPhrases.UNAUTHORIZED,
+        error
+      );
+    }
+
+    if (!decoded || !decoded.id) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
+    }
+
+    // Find the user by the id in the token
+    const user = await User.findById(decoded.id).select(
+      "-password -passwordResetToken -refreshToken -emailVerificationToken"
+    );
+
+    if (!user) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, ReasonPhrases.UNAUTHORIZED);
+    }
+
+    // Check if user has admin role
+    if (user.role !== "admin") {
+      throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
+    }
+
+    // Set the user in the request object
+    req.user = user;
+    console.log("Admin authenticated:", user.email);
+    next();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        ReasonPhrases.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+});
+
 // Authorize roles
 const authorize = (...roles) => {
   return (req, _, next) => {
@@ -200,6 +256,7 @@ const verifyRefreshToken = asyncHandler(async (req, _, next) => {
 
 export {
   authenticate,
+  authenticateAdmin,
   authorize,
   authorizeProblemAuthor,
   verifyRefreshToken,
