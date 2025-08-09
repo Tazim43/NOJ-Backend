@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  getAllSubmissions,
   getAllSubmissionsOfUser,
   getAllSubmissionsOfProblem,
   submitSolution,
@@ -20,7 +21,10 @@ import { ROLES } from "../constants.js";
 
 const router = express.Router();
 
-// Main Route : BASE_URL/submission
+// Main Route : BASE_URL/submissions
+
+// get all submissions (public)
+router.route("/").get(getAllSubmissions);
 
 // get all submissions of the user
 router.route("/my").get(authenticate, getAllSubmissionsOfUser);

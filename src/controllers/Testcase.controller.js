@@ -19,6 +19,7 @@ const getAllTestcases = asyncHandler(async (req, res) => {
 
   const problemId = req.params.id;
   const problem = await Problem.findById(problemId);
+  console.log("Problem ID: ", problemId);
   if (!problem) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,

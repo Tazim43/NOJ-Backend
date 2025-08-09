@@ -13,6 +13,50 @@ import axios from "axios";
 import Submission from "../models/Submission.js";
 import User from "../models/User.js";
 
+// @Route : GET /api/v1/submissions
+// @DESC : Get all submissions
+const getAllSubmissions = asyncHandler(async (req, res) => {
+  // 1. Extract query parameters for pagination
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  // 2. Get total count of submissions
+  const totalSubmissions = await Submission.countDocuments();
+
+  // 3. Query the database to get all submissions with pagination
+  const submissions = await Submission.find()
+    .populate("problemId", "title difficulty")
+    .populate("userId", "username email")
+    .select("_id finalVerdict executionTime memoryUsed languageId createdAt")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .exec();
+
+  // 4. Calculate pagination metadata
+  const totalPages = Math.ceil(totalSubmissions / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+
+  // 5. Return the submissions with pagination info
+  res.status(StatusCodes.OK).json({
+    status: StatusCodes.OK,
+    success: true,
+    data: {
+      submissions,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalSubmissions,
+        hasNextPage,
+        hasPrevPage,
+        limit,
+      },
+    },
+  });
+});
+
 // @Route : GET /api/submissions/my
 // @DESC : Get all submissions of the user
 const getAllSubmissionsOfUser = asyncHandler(async (req, res) => {
@@ -435,6 +479,7 @@ const toggleSubmissionVisibility = asyncHandler(async (req, res) => {
 });
 
 export {
+  getAllSubmissions,
   getAllSubmissionsOfUser,
   getAllSubmissionsOfProblem,
   submitSolution,
