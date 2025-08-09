@@ -7,6 +7,8 @@ import Problem from "../models/Problem.js";
 import ProblemStatement from "../models/ProblemStatement.js";
 import fs from "fs";
 import { uploadOnCloudinary } from "../utils/Cloudinary.js";
+import Submission from "../models/Submission.js";
+import jwt from "jsonwebtoken";
 
 // Create a new problem with current user as author
 // POST /api/v1/problems
@@ -68,7 +70,8 @@ const createProblemStatement = asyncHandler(async (req, res) => {
           "problem-statements"
         );
         if (fs.existsSync(file.path)) {
-          console.log(file.path);
+          // console.log(file.path);
+
           fs.unlinkSync(file.path);
         }
         statementData.imageList.push(imageUrl);
@@ -174,12 +177,125 @@ const updateProblemStatement = asyncHandler(async (req, res) => {
 // Get all visible problems with only title and id
 // GET /api/v1/problems
 const getAllProblems = asyncHandler(async (req, res) => {
+  // console.log("Fetching all visible problems...");
   const problems = await Problem.find(
     { isVisible: true },
-    " title timeLimit memoryLimit tags difficulty solveCount"
-  )
-    .select("_id title timeLimit memoryLimit tags difficulty solveCount")
-    .exec();
+    "_id title timeLimit memoryLimit tags difficulty"
+  ).lean();
+
+  // Decode user ID from access token in cookies
+  let currentUserId = null;
+  if (req.cookies?.accessToken) {
+    try {
+      const decoded = jwt.verify(
+        req.cookies.accessToken,
+        process.env.JWT_SECRET
+      );
+      currentUserId = decoded._id || decoded.id || decoded.userId;
+    } catch (error) {
+      // Invalid token, continue without user context
+      console.log("Invalid access token:", error.message);
+    }
+  }
+
+  console.log(`Current user ID: ${currentUserId}`);
+
+  for (const problem of problems) {
+    // console.log(problem);
+    let submissionCount = await Submission.aggregate([
+      { $match: { problemId: problem._id, finalVerdict: "ACCEPTED" } },
+      { $group: { _id: "$userId" } },
+      { $count: "count" },
+    ]);
+
+    submissionCount = submissionCount.length > 0 ? submissionCount[0].count : 0;
+
+    problem.solveCount = submissionCount;
+
+    // Check if current user has solved this problem
+    if (currentUserId) {
+      const userSolved = await Submission.findOne({
+        problemId: problem._id,
+        userId: currentUserId,
+        finalVerdict: "ACCEPTED",
+      }).lean();
+
+      console.log(userSolved);
+
+      problem.isSolvedByCurrentUser = !!userSolved;
+    } else {
+      problem.isSolvedByCurrentUser = false;
+    }
+  }
+
+  console.log(problems);
+
+  res.status(StatusCodes.OK).json({
+    success: true,
+    problems,
+  });
+});
+
+// Get all problems of current user
+// GET /api/v1/problems/my
+const getMyProblems = asyncHandler(async (req, res) => {
+  // Decode user ID from access token in cookies
+  let currentUserId = null;
+  if (req.cookies?.accessToken) {
+    try {
+      const decoded = jwt.verify(
+        req.cookies.accessToken,
+        process.env.JWT_SECRET
+      );
+      console.log(`Decoded token:`, decoded);
+      currentUserId = decoded._id || decoded.id || decoded.userId;
+    } catch (error) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid access token");
+    }
+  } else {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "Access token required");
+  }
+
+  if (!currentUserId) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "User ID not found in token");
+  }
+
+  // console.log(`Fetching problems for user ${currentUserId}...`);
+
+  const problems = await Problem.find(
+    { authorIds: { $in: [currentUserId] } },
+    "_id title statementId timeLimit memoryLimit tags difficulty"
+  ).lean();
+
+  if (!problems || problems.length === 0) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "No problems found for the current user"
+    );
+  }
+
+  for (const problem of problems) {
+    // console.log(problem);
+    let submissionCount = await Submission.aggregate([
+      { $match: { problemId: problem._id, finalVerdict: "ACCEPTED" } },
+      { $group: { _id: "$userId" } },
+      { $count: "count" },
+    ]);
+
+    submissionCount = submissionCount.length > 0 ? submissionCount[0].count : 0;
+
+    problem.solveCount = submissionCount;
+
+    // Check if current user has solved this problem
+    const userSolved = await Submission.findOne({
+      problemId: problem._id,
+      userId: currentUserId,
+      finalVerdict: "ACCEPTED",
+    }).lean();
+
+    problem.isSolvedByCurrentUser = !!userSolved;
+  }
 
   res.status(StatusCodes.OK).json({
     success: true,
@@ -192,10 +308,12 @@ const getAllProblems = asyncHandler(async (req, res) => {
 const getProblemById = asyncHandler(async (req, res) => {
   const problem = await Problem.findOne({
     _id: req.params.id,
-    isVisible: true,
   })
     .populate("statementId")
     .exec();
+
+  // console.log(`Fetching problem with ID: ${req.params.id}`);
+  // console.log(problem);
   if (!problem) {
     throw new ApiError(
       StatusCodes.NOT_FOUND,
@@ -247,7 +365,7 @@ const updateProblem = asyncHandler(async (req, res) => {
 
   const validationResult = problemValidationSchema.safeParse(problemData);
   if (!validationResult.success) {
-    console.log(validationResult);
+    // console.log(validationResult);
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       ReasonPhrases.BAD_REQUEST,
@@ -313,4 +431,5 @@ export {
   updateProblemStatement,
   deleteProblem,
   updateProblemVisibility,
+  getMyProblems,
 };

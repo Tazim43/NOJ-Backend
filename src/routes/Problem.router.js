@@ -9,6 +9,7 @@ import {
   updateProblemStatement,
   deleteProblem,
   updateProblemVisibility,
+  getMyProblems,
 } from "../controllers/Problem.controller.js";
 
 import {
@@ -24,6 +25,7 @@ const router = express.Router();
 
 // get all problems : public, create problem : user
 router.route("/").get(getAllProblems).post(authenticate, createProblem);
+router.route("/my").get(authenticate, getMyProblems);
 
 router
   .route("/:id")
@@ -33,7 +35,7 @@ router
 
 router
   .route("/:id/statement")
-  .get(authenticate, authorizeProblemAuthor, getProblemStatementById) // QQ : is it necessary? | for testing purpose
+  .get(getProblemStatementById) // QQ : is it necessary? | for testing purpose
   .post(
     upload.array("imageList", 5),
     authenticate,

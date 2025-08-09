@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const DB_NAME = "naivedb";
-export const LIMIT = "64kb";
+export const LIMIT = "32mb";
 export const BASEURL = "/api/v1";
 export const TESTCASE_LIMIT = 45;
 
