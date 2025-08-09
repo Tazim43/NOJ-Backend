@@ -18,7 +18,7 @@ const router = express.Router();
 
 router
   .route("/problem/:id")
-  .get(authenticate, authorizeProblemAuthor, getAllTestcases)
+  .get(authenticate, getAllTestcases)
   .post(authenticate, authorizeProblemAuthor, createTestcase);
 
 router

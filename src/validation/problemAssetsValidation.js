@@ -6,10 +6,10 @@ const base64Regex =
 
 // Problem statement validation schema
 export const problemStatementValidation = z.object({
-  description: z.string().nonempty(),
+  description: z.string().optional(),
   constraints: z.string().optional(),
-  inputDescription: z.string().nonempty(),
-  outputDescription: z.string().nonempty(),
+  inputDescription: z.string().optional(),
+  outputDescription: z.string().optional(),
   imageList: z.array(z.string()).optional(),
   notes: z.string().optional(),
   samples: z.array(z.string()).optional(),
