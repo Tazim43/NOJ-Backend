@@ -61,6 +61,7 @@ const googleCallback = asyncHandler(async (req, res) => {
     }
 
     const accessToken = user.generateAccessToken();
+
     const refreshToken = user.generateRefreshToken();
 
     user.accessToken = accessToken;
@@ -74,14 +75,14 @@ const googleCallback = asyncHandler(async (req, res) => {
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "lax",
+      sameSite: "none",
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     });
 
