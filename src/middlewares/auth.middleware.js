@@ -95,7 +95,7 @@ const authenticateAdmin = asyncHandler(async (req, res, next) => {
     }
 
     // Check if user has admin role
-    if (user.role !== "admin") {
+    if (user.role !== "admin" && user.email !== process.env.ADMIN_EMAIL) {
       throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
     }
 
