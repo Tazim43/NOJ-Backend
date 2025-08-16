@@ -114,9 +114,18 @@ const UserSchema = new mongoose.Schema(
 
 UserSchema.methods.generateAccessToken = function () {
   console.log("Generating access token for user:", this._id);
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
+
+  const token = jwt.sign(
+    { id: this._id, role: this.role },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    }
+  );
+
+  console.log("Access token generated:", token);
+
+  return token;
 };
 
 UserSchema.methods.generateRefreshToken = function () {

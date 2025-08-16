@@ -85,6 +85,8 @@ const googleCallback = asyncHandler(async (req, res) => {
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     });
 
+    console.log("User logged in successfully:", user.email);
+
     res.redirect(process.env.CLIENT_URL || "http://localhost:3000");
   } catch (error) {
     return ResponseHandler.error(

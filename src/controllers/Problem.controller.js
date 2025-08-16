@@ -177,7 +177,7 @@ const updateProblemStatement = asyncHandler(async (req, res) => {
 // Get all visible problems with only title and id
 // GET /api/v1/problems
 const getAllProblems = asyncHandler(async (req, res) => {
-  // console.log("Fetching all visible problems...");
+  console.log("Fetching all visible problems...");
   const problems = await Problem.find(
     { isVisible: true },
     "_id title timeLimit memoryLimit tags difficulty"
