@@ -6,6 +6,7 @@ import {
   updateTestcase,
   deleteTestcase,
   getTestcaseById,
+  getAllSampleTestcases,
 } from "../controllers/Testcase.controller.js";
 import {
   authenticate,
@@ -21,6 +22,7 @@ router
   .get(authenticate, getAllTestcases)
   .post(authenticate, authorizeProblemAuthor, createTestcase);
 
+router.route("/sample/problem/:id").get(getAllSampleTestcases);
 router
   .route("/problem/:id/testcase/:tcId")
   .get(authenticate, authorizeProblemAuthor, getTestcaseById)

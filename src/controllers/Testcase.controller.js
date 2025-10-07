@@ -63,6 +63,26 @@ const getTestcaseById = asyncHandler(async (req, res) => {
   res.status(StatusCodes.OK).json(testcase);
 });
 
+// @route GET /api/testcases/sample/problem/:id
+// @desc get all sample testcases of a problem
+const getAllSampleTestcases = asyncHandler(async (req, res) => {
+  // 1. Get the problem id from the request params
+  // 2. Check if the problem exists
+  // 3. Get all the sample testcases of the problem
+  // 4. Send the response
+  const problemId = req.params.id;
+  const problem = await Problem.findById(problemId);
+  if (!problem) {
+    throw new ApiError(
+      StatusCodes.NOT_FOUND,
+      ReasonPhrases.NOT_FOUND,
+      "Problem not found"
+    );
+  }
+  const testcases = await Testcase.find({ problemId, isSample: true });
+  res.status(StatusCodes.OK).json(testcases);
+});
+
 // @route POST /api/testcases/problem/:id
 // @desc create a testcase
 const createTestcase = asyncHandler(async (req, res) => {
@@ -352,4 +372,5 @@ export {
   createTestcase,
   updateTestcase,
   deleteTestcase,
+  getAllSampleTestcases,
 };
