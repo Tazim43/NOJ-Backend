@@ -15,18 +15,47 @@ const ContestLeaderboardSchema = new mongoose.Schema(
     },
     score: {
       type: Number,
-      required: [true, "score is required"],
+      default: 0,
     },
     penalty: {
       type: Number,
-      required: [true, "penalty is required"],
+      default: 0,
     },
     rank: {
       type: Number,
-      required: [true, "rank is required"],
+      default: 0,
+    },
+    problemsSolved: [
+      {
+        problemId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Problem",
+        },
+        score: {
+          type: Number,
+          default: 0,
+        },
+        attempts: {
+          type: Number,
+          default: 0,
+        },
+        solvedAt: {
+          type: Date,
+        },
+        penaltyTime: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
+    lastSubmissionTime: {
+      type: Date,
     },
   },
   { timestamps: true }
 );
+
+ContestLeaderboardSchema.index({ contestId: 1, rank: 1 });
+ContestLeaderboardSchema.index({ contestId: 1, userId: 1 }, { unique: true });
 
 export default mongoose.model("ContestLeaderboard", ContestLeaderboardSchema);

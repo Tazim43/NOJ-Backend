@@ -12,6 +12,8 @@ import {
 import axios from "axios";
 import Submission from "../models/Submission.js";
 import User from "../models/User.js";
+import Contest from "../models/Contest.js";
+import { updateContestLeaderboard } from "../utils/contestScoring.js";
 
 // @Route : GET /api/v1/submissions
 // @DESC : Get all submissions
@@ -279,6 +281,57 @@ const submitSolution = asyncHandler(async (req, res) => {
     memoryUsed: 0,
   };
 
+  // Add contestId if this is a contest submission
+  if (req.body.contestId) {
+    const contest = await Contest.findById(req.body.contestId);
+
+    if (!contest) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Contest not found");
+    }
+
+    // Check if contest is ongoing
+    const now = new Date();
+    const isCreator = contest.createdBy.toString() === req.user._id.toString();
+    const isAdmin =
+      req.user.role === "admin" ||
+      req.user.role === "super-admin" ||
+      req.user.email === process.env.ADMIN_EMAIL;
+    const isCreatorOrAdmin = isCreator || isAdmin;
+
+    // Allow creator/admin to submit anytime for testing
+    if (!isCreatorOrAdmin) {
+      if (now < contest.startTime || now > contest.endTime) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Contest is not active");
+      }
+
+      // Check if user is registered
+      const isRegistered = contest.registeredUsers.some(
+        (userId) => userId.toString() === req.user._id.toString()
+      );
+
+      if (!isRegistered && !contest.allowLateJoin) {
+        throw new ApiError(
+          StatusCodes.FORBIDDEN,
+          "Not registered for this contest"
+        );
+      }
+    }
+
+    // Check if problem is in contest
+    const isProblemInContest = contest.problems.some(
+      (probId) => probId.toString() === problemId.toString()
+    );
+
+    if (!isProblemInContest) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Problem not in this contest"
+      );
+    }
+
+    submission.contestId = req.body.contestId;
+  }
+
   // save the submission in the database
   const submissionResult = await Submission.create(submission);
 
@@ -383,6 +436,11 @@ const submitSolution = asyncHandler(async (req, res) => {
 
       if (isAllJudged) {
         clearInterval(interval);
+
+        // Update contest leaderboard if this is a contest submission
+        if (submissionResult.contestId) {
+          await updateContestLeaderboard(submissionResult);
+        }
       }
     } catch (error) {
       console.log("Error in fetching all testcases output : ", error);
@@ -395,7 +453,7 @@ const submitSolution = asyncHandler(async (req, res) => {
     }
   }, 5000);
 
-  setTimeout(() => {
+  setTimeout(async () => {
     clearInterval(interval);
 
     if (submissionResult.finalVerdict === VERDICTS.PENDING) {
@@ -413,7 +471,12 @@ const submitSolution = asyncHandler(async (req, res) => {
         }
       }
 
-      submissionResult.save();
+      await submissionResult.save();
+
+      // Update contest leaderboard if this is a contest submission
+      if (submissionResult.contestId) {
+        await updateContestLeaderboard(submissionResult);
+      }
     }
   }, 10 * 5000);
 

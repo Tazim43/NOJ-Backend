@@ -21,14 +21,15 @@ export const axoisCEEHeaders = {
   "x-rapidapi-key": process.env.CEE_API_KEY,
 };
 
+// Judge0 Language IDs - https://ce.judge0.com/#statuses-and-languages-language-get
 export const Languages = {
-  C: 103,
-  CPP: 105,
-  JAVA: 91,
-  PYTHON: 100,
+  C: 50, // C (GCC 9.2.0)
+  CPP: 54, // C++ (GCC 9.2.0)
+  JAVA: 62, // Java (OpenJDK 13.0.1)
+  PYTHON: 71, // Python (3.8.1)
 };
 
-export const supportedLanguages = [103, 105, 91, 100];
+export const supportedLanguages = [50, 54, 62, 71];
 
 export const VERDICTS = {
   AC: "ACCEPTED",

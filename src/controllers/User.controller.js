@@ -72,17 +72,19 @@ const googleCallback = asyncHandler(async (req, res) => {
 
     await user.save();
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     });
 
@@ -124,17 +126,19 @@ const logoutUser = asyncHandler(async (req, res) => {
   foundUser.accessToken = null;
   await foundUser.save();
 
+  const isProduction = process.env.NODE_ENV === "production";
+
   // Clear cookies with same options as when they were set
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
   });
 
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
   });
 
   return ResponseHandler.success(

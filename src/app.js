@@ -5,11 +5,28 @@ import cors from "cors";
 
 const app = express();
 
-const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS.split(",");
+const allowedOrigins = process.env.CORS_ALLOWED_ORIGINS.split(",").map(
+  (origin) => origin.trim()
+);
 const credentials = process.env.CORS_CREDENTIALS === "true"; // Convert to boolean
 
 // app config
-app.use(cors({ origin: allowedOrigins, credentials: credentials })); // enable cors
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    credentials: credentials,
+  })
+); // enable cors
 app.use(express.json({ limit: LIMIT }));
 app.use(express.urlencoded({ limit: LIMIT }));
 app.use(express.static("public"));
@@ -21,6 +38,7 @@ import ProblemRouter from "./routes/Problem.router.js";
 import SolutionRouter from "./routes/Solution.router.js";
 import SubmissionRouter from "./routes/Submission.router.js";
 import TestcaseRouter from "./routes/Testcase.router.js";
+import ContestRouter from "./routes/Contest.router.js";
 
 // define routes
 app.use(`${BASEURL}/auth`, UserRouter);
@@ -28,6 +46,7 @@ app.use(`${BASEURL}/problems`, ProblemRouter);
 app.use(`${BASEURL}/solutions`, SolutionRouter);
 app.use(`${BASEURL}/submissions`, SubmissionRouter);
 app.use(`${BASEURL}/testcases`, TestcaseRouter);
+app.use(`${BASEURL}/contests`, ContestRouter);
 
 import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import ApiError from "./utils/apiError.js";

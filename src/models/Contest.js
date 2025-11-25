@@ -106,10 +106,29 @@ const ContestSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "createdBy is required"],
+    },
+    problemOrder: [
+      {
+        type: String,
+      },
+    ],
+    problemScores: [
+      {
+        type: Number,
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
+
+ContestSchema.index({ startTime: 1, isVisible: 1 });
+ContestSchema.index({ createdBy: 1 });
+ContestSchema.index({ registeredUsers: 1 });
 
 export default mongoose.model("Contest", ContestSchema);

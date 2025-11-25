@@ -11,6 +11,7 @@ const SubmissionSchema = new mongoose.Schema(
     contestId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Contest",
+      index: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,

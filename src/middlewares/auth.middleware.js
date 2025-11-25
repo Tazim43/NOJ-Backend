@@ -6,6 +6,7 @@ import { StatusCodes, ReasonPhrases } from "http-status-codes";
 import User from "../models/User.js";
 import Problem from "../models/Problem.js";
 import Submission from "../models/Submission.js";
+import Contest from "../models/Contest.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Check if the user is authenticated using JWT token in the request header or cookie
@@ -116,9 +117,21 @@ const authenticateAdmin = asyncHandler(async (req, res, next) => {
 });
 
 // Authorize roles
-const authorize = (...roles) => {
+const authorize = (roles) => {
   return (req, _, next) => {
-    if (!roles.includes(req.user.role)) {
+    // Handle both array and spread arguments
+    const roleArray = Array.isArray(roles) ? roles : [roles];
+
+    // Check if user email matches ADMIN_EMAIL (super admin override)
+    if (req.user.email === process.env.ADMIN_EMAIL) {
+      return next();
+    }
+
+    if (!roleArray.includes(req.user.role)) {
+      console.log(
+        `Authorization failed: User role '${req.user.role}' not in allowed roles:`,
+        roleArray
+      );
       throw new ApiError(StatusCodes.FORBIDDEN, ReasonPhrases.FORBIDDEN);
     }
     next();
@@ -254,6 +267,154 @@ const verifyRefreshToken = asyncHandler(async (req, _, next) => {
   }
 });
 
+// Authorize contest creator or admin
+const authorizeContestCreator = asyncHandler(async (req, _, next) => {
+  try {
+    const contestId = req.params.id;
+    const contest = await Contest.findById(contestId);
+
+    if (!contest) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Contest not found");
+    }
+
+    const isCreator = contest.createdBy.toString() === req.user._id.toString();
+    const isAdmin =
+      req.user.role === "admin" ||
+      req.user.role === "super-admin" ||
+      req.user.email === process.env.ADMIN_EMAIL;
+
+    if (!isCreator && !isAdmin) {
+      throw new ApiError(StatusCodes.FORBIDDEN, "Not authorized");
+    }
+
+    req.contest = contest;
+    next();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        ReasonPhrases.INTERNAL_SERVER_ERROR,
+        error
+      );
+    }
+  }
+});
+
+// Check if user is registered for contest
+const authorizeContestParticipant = asyncHandler(async (req, _, next) => {
+  try {
+    const contestId = req.params.id;
+    const contest = await Contest.findById(contestId);
+
+    if (!contest) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Contest not found");
+    }
+
+    const isRegistered = contest.registeredUsers.some(
+      (userId) => userId.toString() === req.user._id.toString()
+    );
+
+    if (!isRegistered) {
+      throw new ApiError(
+        StatusCodes.FORBIDDEN,
+        "Not registered for this contest"
+      );
+    }
+
+    req.contest = contest;
+    next();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        ReasonPhrases.INTERNAL_SERVER_ERROR,
+        error
+      );
+    }
+  }
+});
+
+// Optional authentication - doesn't fail if no token, just doesn't set req.user
+const optionalAuthenticate = asyncHandler(async (req, _, next) => {
+  try {
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      // No token, but that's okay - continue without user
+      return next();
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (error) {
+      // Invalid token, but that's okay - continue without user
+      return next();
+    }
+
+    if (decoded && decoded.id) {
+      const user = await User.findById(decoded.id).select(
+        "-password -passwordResetToken -refreshToken -emailVerificationToken"
+      );
+      if (user) {
+        req.user = user;
+        console.log("User optionally authenticated:", user.email);
+      }
+    }
+    next();
+  } catch (error) {
+    // Any error - just continue without user
+    next();
+  }
+});
+
+// Check if user has access to contest (registered OR creator OR admin)
+const authorizeContestAccess = asyncHandler(async (req, _, next) => {
+  try {
+    const contestId = req.params.id;
+    const contest = await Contest.findById(contestId);
+
+    if (!contest) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Contest not found");
+    }
+
+    const isCreator = contest.createdBy.toString() === req.user._id.toString();
+    const isAdmin =
+      req.user.role === "admin" ||
+      req.user.role === "super-admin" ||
+      req.user.email === process.env.ADMIN_EMAIL;
+    const isRegistered = contest.registeredUsers.some(
+      (userId) => userId.toString() === req.user._id.toString()
+    );
+
+    if (!isCreator && !isAdmin && !isRegistered) {
+      throw new ApiError(
+        StatusCodes.FORBIDDEN,
+        "You must be registered for this contest"
+      );
+    }
+
+    req.contest = contest;
+    next();
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    } else {
+      throw new ApiError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        ReasonPhrases.INTERNAL_SERVER_ERROR,
+        error
+      );
+    }
+  }
+});
+
 export {
   authenticate,
   authenticateAdmin,
@@ -262,4 +423,8 @@ export {
   verifyRefreshToken,
   authorizeSubmissionAuthor,
   authenticateUser,
+  authorizeContestCreator,
+  authorizeContestParticipant,
+  optionalAuthenticate,
+  authorizeContestAccess,
 };
