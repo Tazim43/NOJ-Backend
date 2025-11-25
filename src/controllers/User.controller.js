@@ -72,19 +72,19 @@ const googleCallback = asyncHandler(async (req, res) => {
 
     await user.save();
 
-    const isProduction = process.env.NODE_ENV === "production";
-
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
+      path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
+      path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     });
 
