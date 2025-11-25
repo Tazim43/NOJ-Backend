@@ -126,19 +126,19 @@ const logoutUser = asyncHandler(async (req, res) => {
   foundUser.accessToken = null;
   await foundUser.save();
 
-  const isProduction = process.env.NODE_ENV === "production";
-
   // Clear cookies with same options as when they were set
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
+    path: "/",
   });
 
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
+    path: "/",
   });
 
   return ResponseHandler.success(
